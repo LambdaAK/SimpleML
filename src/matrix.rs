@@ -314,6 +314,24 @@ impl Matrix {
 
 }
 
+impl Matrix {
+    fn arr_to_vec(arr: &[f64]) -> Vec<f64> {
+        let mut vec = Vec::new();
+        for i in arr.iter() {
+          vec.push(*i)
+        }
+        return vec
+      }
+      
+      pub fn from_2d<const ROWS: usize, const COLS: usize>(arr: &[[f64; COLS]; ROWS]) -> Matrix {
+        let mut vec = Vec::new();
+        for row in arr.iter() {
+            vec.push(Self::arr_to_vec(row));
+        }
+        Matrix::new(vec)
+      }
+}
+
 
 
 #[cfg(test)]
