@@ -3,7 +3,7 @@ use std::ops;
 
 
 pub struct Matrix {
-    data: Vec<Vec<f64>>,
+    pub data: Vec<Vec<f64>>,
     rows: usize,
     cols: usize
 }
@@ -140,21 +140,29 @@ impl ops::Mul<Matrix> for f64 {
 }
 
 impl Matrix {
-    pub fn new <const N: usize> (data: [[f64; N]; N]) -> Matrix {
-        let mut vec = Vec::new();
-        for i in 0..N {
-            let mut row = Vec::new();
-            for j in 0..N {
-                row.push(data[i][j])
+    pub fn new(data: Vec<Vec<f64>>) -> Matrix {
+        let rows = data.len();
+        let cols = data[0].len();
+        // make sure that all rows are the same length
+        for i in 1..rows {
+            if data[i].len() != cols {
+                panic!("All rows must have the same length");
             }
-            vec.push(row);
         }
         Matrix {
-            data: vec,
-            rows: N,
-            cols: N
-        }
-    } 
+            data,
+            rows,
+            cols
+        }   
+    }
+    
+    pub fn rows(&self) -> usize {
+        self.rows
+    }
+
+    pub fn cols(&self) -> usize {
+        self.cols
+    }
 
     pub fn trans(&self) -> Matrix {
         let mut vec = Vec::new();
@@ -265,5 +273,56 @@ impl Matrix {
     }
 
 
+    /**
+     * Vertically stack two matrices
+     * They must have the same number of columns
+     * 
+     */
+    pub fn stack(&self, other: &Matrix) -> Matrix {
+        if self.cols() != other.cols() {
+            panic!("Matrices must have the same number of columns to be stacked");
+        }
+
+        let mut vec = Vec::new();
+
+        for i in 0..self.rows() {
+            let mut row = Vec::new();
+            for j in 0..self.cols() {
+                row.push(self.data[i][j]);
+            }
+            vec.push(row);
+        }
+
+        for i in 0..other.rows() {
+            let mut row = Vec::new();
+            for j in 0..other.cols() {
+                row.push(other.data[i][j]);
+            }
+            vec.push(row);
+        }
+
+        println!("d1: {}", vec.len());
+        println!("d2: {}", vec[0].len());
+
+        return Matrix {
+            data: vec,
+            rows: self.rows() + other.rows(),
+            cols: self.cols()
+        }
+    }
+
+
 }
 
+
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn test_matrix_addition() {
+    assert_eq!(1, 1)
+  }
+
+}
