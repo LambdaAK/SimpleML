@@ -5,18 +5,14 @@ use crate::matrix::Matrix;
 mod perceptron;
 use crate::perceptron::Perceptron;
 mod math;
+mod token;
 
 
 
 fn main() {
-    
-  let e = Expr::Var("x".to_string());
-  let e2 = Expr::Num(2.0);
-  let e3 = Expr::Add(Box::new(e), Box::new(e2));
+  let input = "2 + 2 * 2 ^ ^ ^ ^  * * * * 1";
+  let tokens = token::lex_tokens(input);
 
-  let e4 = e3.subs("x", &Expr::Num(3.0));
+  println!("tokens: {:?}", tokens)
 
-  let res = e4.eval();
-
-  println!("{}", res);
 }
