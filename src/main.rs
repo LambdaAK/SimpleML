@@ -9,13 +9,15 @@ mod token;
 mod parser;
 
 
-
 fn main() {
-  let input = "x ^ 3 + x ^ 2 + 2 * x + 1";
+  let input = "2 ^ (2 ^ x)";
   let tokens = token::lex_tokens(input);
-  let expr = parser::parse_l4(&tokens).0;
+  let expr = parser::parse_l4(&tokens).0.eval();
 
-  println!("tokens: {:?}", tokens);
-  println!("expr: {}", expr);
+  let derivative = expr.diff(&"x".to_string());
+
+  println!("Expression: {}", expr);
+  println!("Derivative: {}", derivative);
+
 
 }
