@@ -74,6 +74,20 @@ pub fn lex_single_token(input: &[char]) -> (Token, &[char]) {
       }
       (Token::Num(num.parse().unwrap()), rest)
     },
+    [c, rest @ ..] if c.is_alphabetic() => {
+      let mut var = String::new();
+      var.push(*c);
+      let mut rest = rest;
+      while let Some((next, new_rest)) = rest.split_first() {
+        if next.is_alphanumeric() {
+          var.push(*next);
+          rest = new_rest;
+        } else {
+          break;
+        }
+      }
+      (Token::Var(var), rest)
+    },
     _ => panic!("Lexing failed, tokens: {}", input.iter().collect::<String>())
   }
 }
