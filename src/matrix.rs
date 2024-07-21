@@ -1,6 +1,4 @@
-
 use std::ops;
-
 
 pub struct Matrix {
     pub data: Vec<Vec<f64>>,
