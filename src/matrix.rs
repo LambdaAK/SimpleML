@@ -24,6 +24,8 @@ impl std::fmt::Display for Matrix {
 
 /*
 Matrix operations
+
+Matrix operations take references to matrices as arguments and return a new matrix
 */
 
 impl ops::Add<Matrix> for Matrix {
@@ -49,6 +51,7 @@ impl ops::Add<Matrix> for Matrix {
     }
 }
 
+
 impl ops::Sub<Matrix> for Matrix {
     type Output = Matrix;
 
@@ -72,10 +75,11 @@ impl ops::Sub<Matrix> for Matrix {
     }
 }
 
-impl ops::Mul<Matrix> for Matrix {
+impl ops::Mul<&Matrix> for &Matrix {
     type Output = Matrix;
 
-    fn mul(self, rhs: Matrix) -> Matrix {
+    fn mul(self, rhs: &Matrix) -> Matrix {
+
         if self.cols != rhs.rows {
             panic!("Matrix dimensions do not match");
         }
@@ -96,6 +100,14 @@ impl ops::Mul<Matrix> for Matrix {
             rows: self.rows,
             cols: rhs.cols
         }
+    }
+}
+
+impl ops::Mul<Matrix> for Matrix {
+    type Output = Matrix;
+
+    fn mul(self, rhs: Matrix) -> Matrix {
+        &self * &rhs
     }
 }
 
@@ -139,6 +151,12 @@ impl ops::Mul<Matrix> for f64 {
     }
 }
 
+impl Clone for Matrix {
+    fn clone(&self) -> Self {
+        Self { data: self.data.clone(), rows: self.rows.clone(), cols: self.cols.clone() }
+    }
+}
+
 impl Matrix {
     pub fn new(data: Vec<Vec<f64>>) -> Matrix {
         let rows = data.len();
@@ -164,7 +182,7 @@ impl Matrix {
         self.cols
     }
 
-    pub fn trans(&self) -> Matrix {
+    pub fn t(&self) -> Matrix {
         let mut vec = Vec::new();
         for i in 0..self.cols {
             let mut row = Vec::new();
@@ -220,16 +238,11 @@ impl Matrix {
     }
 
     pub fn cofactor(&self, row: usize, col: usize) -> f64 {
-        println!("Computing C({},{}) of matrix \n{}", row, col, self);
         // compute the minor matrix
         let minor_matrix = self.minor(row, col);
 
-        println!("minor: {}", minor_matrix);
-
         // compute the determinant of the minor matrix
         let minor_det = minor_matrix.det();
-
-        println!("minor det: {}", minor_det);
 
         // compute the cofactor
         let cofactor = if (row + col) % 2 == 0 {minor_det} else {- minor_det};
@@ -239,15 +252,11 @@ impl Matrix {
 
     pub fn adjugate(&self) -> Matrix {
 
-        println!("computing adj of: {}", self);
-
         let mut adjugate_matrix = Vec::new();
         for i in 0..self.rows {
-            println!("i: {}", i);
             let mut row = Vec::new();
             for j in 0..self.cols {
                 let cofactor = self.cofactor(i, j);
-                println!("cofactor: {}", cofactor);
                 row.push(cofactor)
             }
             adjugate_matrix.push(row);
@@ -259,7 +268,7 @@ impl Matrix {
             cols: self.cols
         };
 
-        return adj.trans();
+        return adj.t();
     }
 
     pub fn inverse(&self) -> Matrix {
@@ -279,6 +288,7 @@ impl Matrix {
      * 
      */
     pub fn stack(&self, other: &Matrix) -> Matrix {
+
         if self.cols() != other.cols() {
             panic!("Matrices must have the same number of columns to be stacked");
         }
@@ -301,14 +311,24 @@ impl Matrix {
             vec.push(row);
         }
 
-        println!("d1: {}", vec.len());
-        println!("d2: {}", vec[0].len());
-
         return Matrix {
             data: vec,
             rows: self.rows() + other.rows(),
             cols: self.cols()
         }
+    }
+
+    pub fn rows_as_matrices(&self) -> Vec<Matrix> {
+        let mut matrices : Vec<Matrix> = Vec::new();
+
+        for i in 0..self.rows() {
+            let row = self.data[i].clone();
+            let m = Matrix::row_vec(row.as_slice());
+            matrices.push(m);
+        }
+        
+        return matrices;
+
     }
 
 
@@ -330,6 +350,18 @@ impl Matrix {
         }
         Matrix::new(vec)
       }
+
+    pub fn col_vec(arr: &[f64]) -> Matrix {
+        let mut vec = Vec::new();
+        for i in arr.iter() {
+            vec.push(vec![*i])
+        }
+        Matrix::new(vec)
+    }
+
+    pub fn row_vec(arr: &[f64]) -> Matrix {
+        Self::col_vec(arr).t()
+    }
 }
 
 
