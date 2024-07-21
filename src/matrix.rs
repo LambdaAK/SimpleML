@@ -28,10 +28,10 @@ Matrix operations
 Matrix operations take references to matrices as arguments and return a new matrix
 */
 
-impl ops::Add<Matrix> for Matrix {
+impl ops::Add<&Matrix> for &Matrix {
     type Output = Matrix;
 
-    fn add(self, rhs: Matrix) -> Matrix {
+    fn add(self, rhs: &Matrix) -> Matrix {
         if self.rows != rhs.rows || self.cols != rhs.cols {
             panic!("Matrix dimensions do not match");
         }
@@ -48,6 +48,14 @@ impl ops::Add<Matrix> for Matrix {
             rows: self.rows,
             cols: self.cols
         }
+    }
+}
+
+impl ops::Add<Matrix> for Matrix {
+    type Output = Matrix;
+
+    fn add(self, rhs: Matrix) -> Matrix {
+        &self + &rhs
     }
 }
 
@@ -111,10 +119,10 @@ impl ops::Mul<Matrix> for Matrix {
     }
 }
 
-impl ops::Mul<f64> for Matrix {
+impl ops::Mul<&f64> for &Matrix {
     type Output = Matrix;
 
-    fn mul(self, rhs: f64) -> Matrix {
+    fn mul(self, rhs: &f64) -> Matrix {
         let mut vec = Vec::new();
         for i in 0..self.rows {
             let mut row = Vec::new();
@@ -128,6 +136,14 @@ impl ops::Mul<f64> for Matrix {
             rows: self.rows,
             cols: self.cols
         }
+    }
+}
+
+impl ops::Mul<f64> for Matrix {
+    type Output = Matrix;
+
+    fn mul(self, rhs: f64) -> Matrix {
+        &self * &rhs
     }
 }
 
@@ -329,6 +345,30 @@ impl Matrix {
         
         return matrices;
 
+    }
+
+    pub fn mul_pointwise(&self, x: &Matrix) -> Matrix {
+
+        // dimensions must be exactly the same
+        if self.rows != x.rows || self.cols != x.cols {
+            panic!("Matrix dimensions do not match in mul_pointwise");
+        }
+
+        let mut vec = Vec::new();
+
+        for i in 0..self.rows {
+            let mut row = Vec::new();
+            for j in 0..self.cols {
+                row.push(self.data[i][j] * x.data[i][j]);
+            }
+            vec.push(row);
+        }
+
+        return Matrix {
+            data: vec,
+            rows: self.rows,
+            cols: self.cols
+        }
     }
 
 
