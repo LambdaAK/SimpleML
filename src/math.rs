@@ -465,6 +465,24 @@ impl Matrix {
 }
 
 impl Matrix {
+  pub fn subs(&self, var: &String, val: Expr) -> Matrix {
+    let mut new_data = Vec::new();
+    for i in 0..self.rows {
+      let mut row = Vec::new();
+      for j in 0..self.cols {
+        row.push(self.data[i][j].subs(var, &val));
+      }
+      new_data.push(row);
+    }
+    Matrix {
+      data: new_data,
+      rows: self.rows,
+      cols: self.cols
+    }
+  }
+}
+
+impl Matrix {
   pub fn eval(&self) -> Matrix {
     let mut new_data = Vec::new();
     for i in 0..self.rows {

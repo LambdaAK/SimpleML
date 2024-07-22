@@ -10,11 +10,11 @@ mod parser;
 
 
 fn main() {
-  let input = "2 ^ ln(ln(x + y + 2 * z))";
+  let input = "a ^ 2 + ln(b ^ 1000)";
   let tokens = token::lex_tokens(input);
   let (expr, _) = parser::parse_l5(&tokens);
 
   println!("Expr: {}", expr);
-  println!("Gradient\n{}", expr.grad().eval());
+  println!("Gradient\n{}", expr.grad().subs(&"a".to_string(), Expr::Num(1.)).subs(&"b".to_string(), Expr::Num(2.)).eval());
 
 }
