@@ -15,13 +15,27 @@ impl Clone for Const {
 }
 
 pub enum Fun {
-  Ln
+  Ln,
+  ReLU,
+  ReLUPrime
+}
+
+impl Fun {
+  pub fn from_str(s: &str) -> Option<Fun> {
+    match s {
+      "ln" => Some(Fun::Ln),
+      "relu" => Some(Fun::ReLU),
+      _ => None
+    }
+  }
 }
 
 impl Clone for Fun {
   fn clone(&self) -> Self {
     match self {
-      Fun::Ln => Fun::Ln
+      Fun::Ln => Fun::Ln,
+      Fun::ReLU => Fun::ReLU,
+      Fun::ReLUPrime => Fun::ReLUPrime
     }
   }
 }
@@ -29,7 +43,9 @@ impl Clone for Fun {
 impl Display for Fun {
   fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
     match self {
-      Fun::Ln => write!(f, "ln")
+      Fun::Ln => write!(f, "ln"),
+      Fun::ReLU => write!(f, "ReLU"),
+      Fun::ReLUPrime => write!(f, "ReLU'")
     }
   }
 }
@@ -43,7 +59,7 @@ pub enum Expr {
   Mul(Box<Expr>, Box<Expr>),
   Div(Box<Expr>, Box<Expr>),
   Pow(Box<Expr>, Box<Expr>),
-  App(Box<Fun>, Box<Expr>),
+  App(Fun, Box<Expr>),
   Var(String)
 }
 
@@ -93,12 +109,12 @@ impl Expr {
         Expr::Add(a, b) => {
           let new_a = a.subs(var, val);
           let new_b = b.subs(var, val);
-          Expr::Add(Box::new(new_a), Box::new(new_b))
+          (new_a + new_b).eval()
         },
         Expr::Sub(a, b) => {
           let new_a = a.subs(var, val);
           let new_b = b.subs(var, val);
-          Expr::Sub(Box::new(new_a), Box::new(new_b))
+          (new_a - new_b).eval()
         },
         Expr::Mul(a, b) => {
           let new_a = a.subs(var, val);
@@ -208,7 +224,7 @@ impl Expr {
 
       Expr::App(f, a) => {
         let new_a = a.eval();
-        match (&**f, &new_a) {
+        match (f, &new_a) {
           (Fun::Ln, Expr::Num(x)) => Expr::Num(x.ln()),
           _ => Expr::App(f.clone(), Box::new(new_a.clone()))
         }
@@ -231,6 +247,7 @@ impl Expr {
 impl Expr {
   
   pub fn diff(&self, wrt: &String) -> Expr {
+
     // The derivative is taken with respect to wrt
     match self {
       Expr::Num(_) => Expr::Num(0.0),
@@ -250,13 +267,13 @@ impl Expr {
       Expr::Add(a, b) => {
         let new_a = a.diff(wrt);
         let new_b = b.diff(wrt);
-        Expr::Add(Box::new(new_a), Box::new(new_b)).eval()
+        new_a + new_b
       },
 
       Expr::Sub(a, b) => {
         let new_a = a.diff(wrt);
         let new_b = b.diff(wrt);
-        Expr::Sub(Box::new(new_a), Box::new(new_b)).eval()
+        new_a - new_b
       },
 
       Expr::Mul(a, b) => {
@@ -264,7 +281,7 @@ impl Expr {
         let new_b = b.diff(wrt);
         let a = a.eval();
         let b = b.eval();
-        (new_a * b.clone() + a.clone() * new_b).eval()
+        new_a * b.clone() + a.clone() * new_b
       },
 
       Expr::Div(a, b) => {
@@ -272,7 +289,7 @@ impl Expr {
         let new_b = b.diff(wrt);
         let a = a.eval();
         let b = b.eval();
-        ((new_a * b.clone() - a.clone() * new_b) / (b.clone() * b.clone())).eval()
+        (new_a * b.clone() - a * new_b) / (b.clone() * b.clone())
       },
 
       Expr::Pow(a, b) => {
@@ -285,12 +302,12 @@ impl Expr {
         
         let coeff = Expr::Pow(Box::new(a.clone()), Box::new(b.clone()));
 
-        let rest = ((b * a_prime) / a.clone()) + Expr::App(Box::new(Fun::Ln), Box::new(a)) * b_prime.clone();
+        let rest = ((b * a_prime) / a.clone()) + Expr::App(Fun::Ln, Box::new(a)) * b_prime.clone();
 
         (coeff * rest).eval()
       },
 
-      Expr::App(f, a) => Self::diff_app(f, a, wrt),
+      Expr::App(f, a) => Self::diff_app(f, a, wrt).eval(),
 
     }
   }
@@ -300,6 +317,12 @@ impl Expr {
       Fun::Ln => {
         let new_a = a.diff(wrt);
         new_a / a.clone()
+      },
+      Fun::ReLU => {
+        Expr::App(Fun::ReLUPrime, Box::new(a.clone())) * a.diff(wrt)
+      },
+      Fun::ReLUPrime => {
+        Expr::Num(0.0)
       }
     }
   }
@@ -337,3 +360,4 @@ impl ops::Div for Expr {
     Expr::Div(Box::new(self), Box::new(other))
   }
 }
+

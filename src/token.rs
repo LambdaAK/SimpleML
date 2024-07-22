@@ -1,5 +1,4 @@
 
-
 pub enum Token {
   LeftParen,
   RightParen,
@@ -10,8 +9,34 @@ pub enum Token {
   Div,
   Pow,
   Var(String),
+  Fun(FunctionToken)
 
 }
+
+fn str_to_fun(s: &str) -> Option<FunctionToken> {
+  match s {
+    "ln" => Some(FunctionToken::Ln),
+    "relu" => Some(FunctionToken::ReLU),
+    _ => None
+  }
+}
+
+const FUNCTION_NAMES: [&str; 2] = ["ln", "relu"];
+
+pub enum FunctionToken {
+  Ln,
+  ReLU
+}
+
+impl std::fmt::Display for FunctionToken {
+  fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    match self {
+      FunctionToken::Ln => write!(f, "ln"),
+      FunctionToken::ReLU => write!(f, "ReLU")
+    }
+  }
+}
+
 // debug
 // derive
 impl std::fmt::Debug for Token {
@@ -25,7 +50,8 @@ impl std::fmt::Debug for Token {
       Token::Mul => write!(f, "Mul"),
       Token::Div => write!(f, "Div"),
       Token::Pow => write!(f, "Pow"),
-      Token::Var(v) => write!(f, "Var({})", v)
+      Token::Var(v) => write!(f, "Var({})", v),
+      Token::Fun(v) => write!(f, "Fun({})", v)
     }
   }
 }
@@ -40,12 +66,11 @@ impl std::fmt::Display for Token {
       Token::Mul => write!(f, "*"),
       Token::Div => write!(f, "/"),
       Token::Pow => write!(f, "^"),
-      Token::Var(v) => write!(f, "{}", v)
+      Token::Var(v) => write!(f, "{}", v),
+      Token::Fun(v) => write!(f, "{}", v)
     }
   }
 }
-
-
 
 /**
  * Lexes a single token from the input string, 
@@ -86,7 +111,18 @@ pub fn lex_single_token(input: &[char]) -> (Token, &[char]) {
           break;
         }
       }
-      (Token::Var(var), rest)
+
+      // if it's a function name, turn it into a function token
+
+      // try converting the string to a function
+
+      let fun_option = str_to_fun(&var);
+
+      match fun_option {
+        Some(fun) => (Token::Fun(fun), rest),
+        None => (Token::Var(var), rest)
+      }
+      
     },
     _ => panic!("Lexing failed, tokens: {}", input.iter().collect::<String>())
   }
