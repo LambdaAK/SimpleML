@@ -10,7 +10,7 @@ mod parser;
 
 
 fn main() {
-  let input = "2 ^ (2 ^ x)";
+  let input = "x ^ x ^ x ^ x ^ x ^ x ^ x ^ x ^ x ^ x ^ x ^ x ^ x";
   let tokens = token::lex_tokens(input);
   let expr = parser::parse_l4(&tokens).0.eval();
 

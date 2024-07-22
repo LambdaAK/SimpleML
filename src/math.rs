@@ -109,48 +109,68 @@ impl Expr {
 
 impl Expr {
   pub fn eval(&self) -> Expr {
+
+    fn eval_add(a: &Expr, b: &Expr) -> Expr {
+      let a = a.eval();
+      let b = b.eval();
+
+      // check if one of them is 0
+
+      match (&a, &b) {
+        (Expr::Num(x), Expr::Num(y)) => Expr::Num(x + y),
+        (Expr::Num(0.), _) => b,
+        (_, Expr::Num(0.)) => a,
+        _ => a + b
+      }
+    }
+
+    fn eval_sub(a: &Expr, b: &Expr) -> Expr {
+      let a = a.eval();
+      let b = b.eval();
+
+      // check if one of them is 0
+
+      match (&a, &b) {
+        (Expr::Num(0.), Expr::Num(n)) => Expr::Num(-n),
+        (Expr::Num(x), Expr::Num(y)) => Expr::Num(x - y),
+        (_, Expr::Num(0.)) => a,
+        _ => a - b
+      }
+
+    }
+
+    fn eval_mul(a: &Expr, b: &Expr) -> Expr {
+      let a = a.eval();
+      let b = b.eval();
+
+      match (&a, &b) {
+        (Expr::Num(x), Expr::Num(y)) => Expr::Num(x * y),
+        (Expr::Num(0.), _) => Expr::Num(0.),
+        (_, Expr::Num(0.)) => Expr::Num(0.),
+        (Expr::Num(1.), _) => b,
+        (_, Expr::Num(1.)) => a,
+        _ => a * b
+      }
+    }
+
+    fn eval_div(a: &Expr, b: &Expr) -> Expr {
+      let a = a.eval();
+      let b = b.eval();
+
+      match (&a, &b) {
+        (Expr::Num(x), Expr::Num(y)) => Expr::Num(x / y),
+        (Expr::Num(0.), _) => Expr::Num(0.),
+        (_, Expr::Num(1.)) => a,
+        _ => a / b
+      }
+    }
+
     match self {
       Expr::Num(_) => self.clone(),
-      Expr::Add(a, b) => {
-        let new_a = a.eval();
-        let new_b = b.eval();
-        // if new_a and new_b are both Num, then we can add them and output a new Num
-        match (&new_a, &new_b) {
-          (Expr::Num(x), Expr::Num(y)) => Expr::Num(x + y),
-          _ => Expr::Add(Box::new(new_a), Box::new(new_b))
-        }
-      },
-
-      Expr::Sub(a, b) => {
-        let new_a = a.eval();
-        let new_b = b.eval();
-        // if new_a and new_b are both Num, then we can add them and output a new Num
-        match (&new_a, &new_b) {
-          (Expr::Num(x), Expr::Num(y)) => Expr::Num(x - y),
-          _ => Expr::Sub(Box::new(new_a), Box::new(new_b))
-        }
-      },
-
-      Expr::Mul(a, b) => {
-        let new_a = a.eval();
-        let new_b = b.eval();
-        // if new_a and new_b are both Num, then we can add them and output a new Num
-        match (&new_a, &new_b) {
-          (Expr::Num(x), Expr::Num(y)) => Expr::Num(x * y),
-          _ => Expr::Mul(Box::new(new_a), Box::new(new_b))
-        }
-      },
-
-      Expr::Div(a, b) => {
-        let new_a = a.eval();
-        let new_b = b.eval();
-        // if new_a and new_b are both Num, then we can add them and output a new Num
-        match (&new_a, &new_b) {
-          (Expr::Num(x), Expr::Num(y)) => Expr::Num(x / y),
-          _ => Expr::Div(Box::new(new_a), Box::new(new_b))
-        }
-      },
-
+      Expr::Add(a, b) => eval_add(a, b),
+      Expr::Sub(a, b) => eval_sub(a, b),
+      Expr::Mul(a, b) => eval_mul(a, b),
+      Expr::Div(a, b) => eval_div(a, b),
       Expr::Pow(a, b) => {
         let new_a = a.eval();
         let new_b = b.eval();
@@ -227,14 +247,12 @@ impl Expr {
 
         let a = a.eval();
         let b = b.eval();
-
-        let c = a.clone();
         
         let coeff = Expr::Pow(Box::new(a.clone()), Box::new(b.clone()));
 
-        let rest = ((b * a_prime) / a) + Expr::App(Box::new(Fun::Ln), Box::new(c)) * b_prime.clone();
+        let rest = ((b * a_prime) / a.clone()) + Expr::App(Box::new(Fun::Ln), Box::new(a)) * b_prime.clone();
 
-        coeff * rest
+        (coeff * rest).eval()
       },
       
       _ => {
