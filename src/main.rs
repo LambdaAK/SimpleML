@@ -10,14 +10,12 @@ mod parser;
 
 
 fn main() {
-  let input = "x ^ x ^ x ^ x ^ x ^ x ^ x ^ x ^ x ^ x ^ x ^ x ^ x";
+  let input = "x ^ (2 * x)";
   let tokens = token::lex_tokens(input);
   let expr = parser::parse_l4(&tokens).0.eval();
 
   let derivative = expr.diff(&"x".to_string());
 
   println!("Expression: {}", expr);
-  println!("Derivative: {}", derivative);
-
-
+  println!("Derivative: {}", derivative.subs(&"x".to_string(), &Expr::Num(2.0)).eval());
 }

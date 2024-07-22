@@ -1,5 +1,19 @@
 use std::{fmt::{Display, Formatter}, ops::{self, Add, Sub}};
 
+pub enum Const {
+  Pi,
+  E
+}
+
+impl Clone for Const {
+  fn clone(&self) -> Self {
+    match self {
+      Const::Pi => Const::Pi,
+      Const::E => Const::E
+    }
+  }
+}
+
 pub enum Fun {
   Ln
 }
@@ -20,8 +34,10 @@ impl Display for Fun {
   }
 }
 
+
 pub enum Expr {
   Num(f64),
+  Const(Const),
   Add(Box<Expr>, Box<Expr>),
   Sub(Box<Expr>, Box<Expr>),
   Mul(Box<Expr>, Box<Expr>),
@@ -36,6 +52,7 @@ impl Clone for Expr {
     fn clone(&self) -> Self {
         match self {
             Self::Num(arg0) => Self::Num(arg0.clone()),
+            Self::Const(arg0) => Self::Const(arg0.clone()),
             Self::Add(arg0, arg1) => Self::Add(arg0.clone(), arg1.clone()),
             Self::Sub(arg0, arg1) => Self::Sub(arg0.clone(), arg1.clone()),
             Self::Mul(arg0, arg1) => Self::Mul(arg0.clone(), arg1.clone()),
@@ -51,6 +68,12 @@ impl std::fmt::Display for Expr {
   fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
     match self {
       Expr::Num(n) => write!(f, "{}", n),
+      Expr::Const(c) => {
+        match c {
+          Const::Pi => write!(f, "π"),
+          Const::E => write!(f, "e")
+        }
+      },
       Expr::Add(a, b) => write!(f, "({} + {})", a, b),
       Expr::Sub(a, b) => write!(f, "({} - {})", a, b),
       Expr::Mul(a, b) => write!(f, "({} * {})", a, b),
@@ -66,6 +89,7 @@ impl Expr {
   pub fn subs(&self, var: &str, val: &Expr) -> Expr {
     match self {
         Expr::Num(_) => self.clone(),
+        Expr::Const(_) => self.clone(),
         Expr::Add(a, b) => {
           let new_a = a.subs(var, val);
           let new_b = b.subs(var, val);
@@ -167,6 +191,7 @@ impl Expr {
 
     match self {
       Expr::Num(_) => self.clone(),
+      Expr::Const(c) => Self::eval_const(c),
       Expr::Add(a, b) => eval_add(a, b),
       Expr::Sub(a, b) => eval_sub(a, b),
       Expr::Mul(a, b) => eval_mul(a, b),
@@ -193,13 +218,23 @@ impl Expr {
 
     }
   }
+
+  fn eval_const(c: &Const) -> Expr {
+    match c {
+      Const::Pi => Expr::Num(std::f64::consts::PI),
+      Const::E => Expr::Num(std::f64::consts::E)
+    }
+  }
+
 }
 
 impl Expr {
+  
   pub fn diff(&self, wrt: &String) -> Expr {
     // The derivative is taken with respect to wrt
     match self {
       Expr::Num(_) => Expr::Num(0.0),
+      Expr::Const(_) => Expr::Num(0.0),
       Expr::Var(v) => {
         /*
          * If this is wrt, then the derivative is 1
@@ -254,13 +289,21 @@ impl Expr {
 
         (coeff * rest).eval()
       },
-      
-      _ => {
-        todo!("Implement the rest of the differentiation rules")
-      }
+
+      Expr::App(f, a) => Self::diff_app(f, a, wrt),
 
     }
   }
+
+  fn diff_app(f: &Fun, a: &Expr, wrt: &String) -> Expr {
+    match f {
+      Fun::Ln => {
+        let new_a = a.diff(wrt);
+        new_a / a.clone()
+      }
+    }
+  }
+
 }
 
 impl Add for Expr {
