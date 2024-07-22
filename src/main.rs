@@ -10,14 +10,11 @@ mod parser;
 
 
 fn main() {
-  let input = "ln(x * x) * ln(2 * x)";
+  let input = "2 ^ ln(ln(x + y + 2 * z))";
   let tokens = token::lex_tokens(input);
   let (expr, _) = parser::parse_l5(&tokens);
 
   println!("Expr: {}", expr);
-
-  let derivative = expr.diff(&"x".to_string());
-
-  println!("Derivative: {}", derivative);
+  println!("Gradient\n{}", expr.grad().eval());
 
 }

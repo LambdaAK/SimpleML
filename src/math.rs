@@ -1,4 +1,6 @@
-use std::{fmt::{Display, Formatter}, ops::{self, Add, Sub}};
+use std::{collections::HashSet, fmt::{Display, Formatter}, ops::{self, Add, Sub}};
+
+use crate::matrix;
 
 pub enum Const {
   Pi,
@@ -50,7 +52,6 @@ impl Display for Fun {
   }
 }
 
-
 pub enum Expr {
   Num(f64),
   Const(Const),
@@ -97,6 +98,57 @@ impl std::fmt::Display for Expr {
       Expr::Pow(a, b) => write!(f, "({} ^ {})", a, b),
       Expr::App(fun, arg) => write!(f, "{}({})", fun, arg),
       Expr::Var(v) => write!(f, "{}", v)
+    }
+  }
+}
+
+impl Expr {
+
+  pub fn vars(&self) -> Vec<String> {
+    let vars_set = self.vars_aux();
+    let mut vars_vec = Vec::new();
+    for var in vars_set {
+      vars_vec.push(var);
+    };
+    vars_vec.sort();
+    vars_vec
+  }
+
+  fn vars_aux(&self) -> HashSet<String> {
+    match self {
+      Expr::Num(_) => HashSet::new(),
+      Expr::Const(_) => HashSet::new(),
+      Expr::Add(a, b) => {
+        let mut vars = a.vars_aux();
+        vars.extend(b.vars_aux());
+        vars
+      },
+      Expr::Sub(a, b) => {
+        let mut vars = a.vars_aux();
+        vars.extend(b.vars_aux());
+        vars
+      },
+      Expr::Mul(a, b) => {
+        let mut vars = a.vars_aux();
+        vars.extend(b.vars_aux());
+        vars
+      },
+      Expr::Div(a, b) => {
+        let mut vars = a.vars_aux();
+        vars.extend(b.vars_aux());
+        vars
+      },
+      Expr::Pow(a, b) => {
+        let mut vars = a.vars_aux();
+        vars.extend(b.vars_aux());
+        vars
+      },
+      Expr::App(_, a) => a.vars_aux(),
+      Expr::Var(v) => {
+        let mut vars = HashSet::new();
+        vars.insert(v.clone());
+        vars
+      }
     }
   }
 }
@@ -327,6 +379,27 @@ impl Expr {
     }
   }
 
+  pub fn grad(&self) -> Matrix {
+    let vars = self.vars();
+    let mut data = Vec::new();
+    
+    // for each variable, compute the derivative of the expression with respect to that variable
+    
+    for var in &vars {
+      let deriv = self.diff(&var);
+      let mut v = Vec::new();
+      v.push(deriv);
+      data.push(v);
+    };
+
+    Matrix {
+      data,
+      rows: (&vars).len(),
+      cols: 1
+    }
+
+  }
+
 }
 
 impl Add for Expr {
@@ -358,6 +431,74 @@ impl ops::Div for Expr {
 
   fn div(self, other: Expr) -> Expr {
     Expr::Div(Box::new(self), Box::new(other))
+  }
+}
+
+pub struct Matrix {
+  data: Vec<Vec<Expr>>,
+  rows: usize,
+  cols: usize,
+}
+
+impl Matrix {
+  pub fn to_float_matrix(&self) -> Option<matrix::Matrix> {
+    // try to evaluate each element of the matrix to a number
+    // if this is not possible, return None
+
+    let mut data = Vec::new();
+
+    for i in 0..self.rows {
+      let mut row = Vec::new();
+      for j in 0..self.cols {
+        let elem = self.data[i][j].eval();
+        match elem {
+          Expr::Num(n) => row.push(n),
+          _ => return None
+        }
+      };
+      data.push(row);
+    }
+
+    return Some(matrix::Matrix::new(data));
+
+  }
+}
+
+impl Matrix {
+  pub fn eval(&self) -> Matrix {
+    let mut new_data = Vec::new();
+    for i in 0..self.rows {
+      let mut row = Vec::new();
+      for j in 0..self.cols {
+        row.push(self.data[i][j].eval());
+      }
+      new_data.push(row);
+    }
+    Matrix {
+      data: new_data,
+      rows: self.rows,
+      cols: self.cols
+    }
+  }
+}
+
+impl std::fmt::Display for Matrix {
+  fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    let mut s = String::new();
+    for i in 0..self.rows {
+      s.push_str("[");
+      for j in 0..self.cols {
+        s.push_str(&format!("{}", self.data[i][j]));
+        if j < self.cols - 1 {
+          s.push_str(", ");
+        }
+      }
+      s.push_str("]");
+      if i < self.rows - 1 {
+        s.push_str("\n");
+      }
+    }
+    write!(f, "{}", s)
   }
 }
 
