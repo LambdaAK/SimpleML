@@ -1,20 +1,6 @@
 use std::{collections::HashSet, fmt::{Display, Formatter}, ops::{self, Add, Sub}};
 
-use crate::matrix;
-
-pub enum Const {
-  Pi,
-  E
-}
-
-impl Clone for Const {
-  fn clone(&self) -> Self {
-    match self {
-      Const::Pi => Const::Pi,
-      Const::E => Const::E
-    }
-  }
-}
+use crate::{matrix, token::ConstantToken};
 
 pub enum Fun {
   Ln,
@@ -54,7 +40,7 @@ impl Display for Fun {
 
 pub enum Expr {
   Num(f64),
-  Const(Const),
+  Const(ConstantToken),
   Add(Box<Expr>, Box<Expr>),
   Sub(Box<Expr>, Box<Expr>),
   Mul(Box<Expr>, Box<Expr>),
@@ -87,8 +73,8 @@ impl std::fmt::Display for Expr {
       Expr::Num(n) => write!(f, "{}", n),
       Expr::Const(c) => {
         match c {
-          Const::Pi => write!(f, "π"),
-          Const::E => write!(f, "e")
+          ConstantToken::Pi => write!(f, "π"),
+          ConstantToken::E => write!(f, "e")
         }
       },
       Expr::Add(a, b) => write!(f, "({} + {})", a, b),
@@ -287,10 +273,10 @@ impl Expr {
     }
   }
 
-  fn eval_const(c: &Const) -> Expr {
+  fn eval_const(c: &ConstantToken) -> Expr {
     match c {
-      Const::Pi => Expr::Num(std::f64::consts::PI),
-      Const::E => Expr::Num(std::f64::consts::E)
+      ConstantToken::Pi => Expr::Num(std::f64::consts::PI),
+      ConstantToken::E => Expr::Num(std::f64::consts::E)
     }
   }
 
@@ -379,8 +365,7 @@ impl Expr {
     }
   }
 
-  pub fn grad(&self) -> Matrix {
-    let vars = self.vars();
+  pub fn grad(&self, vars: Vec<String>) -> Matrix {
     let mut data = Vec::new();
     
     // for each variable, compute the derivative of the expression with respect to that variable
@@ -398,6 +383,26 @@ impl Expr {
       cols: 1
     }
 
+  }
+
+  pub fn hessian(&self) -> Matrix {
+    let vars = self.vars();
+    let mut data = Vec::new();
+    for var in &vars {
+      let mut row = Vec::new();
+      for var2 in &vars {
+        let deriv = self.diff(&var);
+        let deriv2 = deriv.diff(&var2);
+        row.push(deriv2);
+      }
+      data.push(row);
+    }
+    Matrix {
+      data,
+      rows: (&vars).len(),
+      cols: (&vars).len()
+    }
+  
   }
 
 }

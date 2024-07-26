@@ -95,6 +95,7 @@ fn parse_l1 (tokens: &[Token]) -> (Expr, &[Token]) {
   match tokens {
     [Token::Num(x), rest @ ..] => (Expr::Num(*x), rest),
     [Token::Var(s), rest @ ..] => (Expr::Var(s.to_string()), rest),
+    [Token::Const(c), rest @ ..] => (Expr::Const(c.clone()), rest),
     [Token::LeftParen, rest @ ..] => {
       let (expr, rest) = parse_l5(rest);
       match rest {

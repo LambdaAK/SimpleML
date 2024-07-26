@@ -9,7 +9,8 @@ pub enum Token {
   Div,
   Pow,
   Var(String),
-  Fun(FunctionToken)
+  Fun(FunctionToken),
+  Const(ConstantToken)
 
 }
 
@@ -21,11 +22,42 @@ fn str_to_fun(s: &str) -> Option<FunctionToken> {
   }
 }
 
+fn str_to_const(s: &str) -> Option<ConstantToken> {
+  match s {
+    "pi" => Some(ConstantToken::Pi),
+    "e" => Some(ConstantToken::E),
+    _ => None
+  }
+}
+
 const FUNCTION_NAMES: [&str; 2] = ["ln", "relu"];
 
 pub enum FunctionToken {
   Ln,
   ReLU
+}
+
+pub enum ConstantToken {
+  Pi,
+  E
+}
+
+impl Clone for ConstantToken {
+  fn clone(&self) -> Self {
+    match self {
+      ConstantToken::Pi => ConstantToken::Pi,
+      ConstantToken::E => ConstantToken::E
+    }
+  }
+}
+
+impl std::fmt::Display for ConstantToken {
+  fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    match self {
+      ConstantToken::Pi => write!(f, "pi"),
+      ConstantToken::E => write!(f, "e")
+    }
+  }
 }
 
 impl std::fmt::Display for FunctionToken {
@@ -51,7 +83,8 @@ impl std::fmt::Debug for Token {
       Token::Div => write!(f, "Div"),
       Token::Pow => write!(f, "Pow"),
       Token::Var(v) => write!(f, "Var({})", v),
-      Token::Fun(v) => write!(f, "Fun({})", v)
+      Token::Fun(v) => write!(f, "Fun({})", v),
+      Token::Const(v) => write!(f, "Const({})", v)
     }
   }
 }
@@ -67,7 +100,8 @@ impl std::fmt::Display for Token {
       Token::Div => write!(f, "/"),
       Token::Pow => write!(f, "^"),
       Token::Var(v) => write!(f, "{}", v),
-      Token::Fun(v) => write!(f, "{}", v)
+      Token::Fun(v) => write!(f, "{}", v),
+      Token::Const(v) => write!(f, "{}", v)
     }
   }
 }
@@ -120,7 +154,13 @@ pub fn lex_single_token(input: &[char]) -> (Token, &[char]) {
 
       match fun_option {
         Some(fun) => (Token::Fun(fun), rest),
-        None => (Token::Var(var), rest)
+        None => {
+          let const_option = str_to_const(&var);
+          match const_option {
+            Some(constant) => (Token::Const(constant), rest),
+            None => (Token::Var(var), rest)
+          }
+        }
       }
       
     },

@@ -402,6 +402,25 @@ impl Matrix {
     }
 }
 
+impl Matrix {
+    pub fn euclidean_norm(&self) -> Result<f64, String> {
+        // must be a vector
+        if self.cols != 1 && self.rows != 1 {
+            return Err("Matrix must be a vector".to_string());
+        }
+
+        // if it's a row vector, transpose it
+        let v = if self.rows == 1 {self.t()} else {self.clone()};
+
+        // take the inner product with itself
+        let inner_product = v.t() * v;
+
+        // take the square root of the inner product
+
+        return Ok(inner_product.data[0][0].sqrt());
+    }
+}
+
 
 
 #[cfg(test)]
