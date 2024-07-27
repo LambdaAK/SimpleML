@@ -2,6 +2,10 @@ use std::{collections::HashSet, fmt::{Display, Formatter}, ops::{self, Add, Sub}
 
 use crate::{matrix, token::ConstantToken};
 
+/*
+  Fun enum with implementations
+*/
+
 pub enum Fun {
   Ln,
   ReLU,
@@ -38,6 +42,10 @@ impl Display for Fun {
   }
 }
 
+/*
+  Expr enum with implementations
+*/
+
 pub enum Expr {
   Num(f64),
   Const(ConstantToken),
@@ -49,7 +57,6 @@ pub enum Expr {
   App(Fun, Box<Expr>),
   Var(String)
 }
-
 
 impl Clone for Expr {
     fn clone(&self) -> Self {
@@ -66,6 +73,9 @@ impl Clone for Expr {
         }
     }
 }
+/*
+  Display implementation for Expr
+*/
 
 impl std::fmt::Display for Expr {
   fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -87,6 +97,10 @@ impl std::fmt::Display for Expr {
     }
   }
 }
+
+/*
+  Getting the vars in an expression
+*/
 
 impl Expr {
 
@@ -139,6 +153,10 @@ impl Expr {
   }
 }
 
+/*
+  Substitution in Expr
+*/
+
 impl Expr {
   pub fn subs(&self, var: &str, val: &Expr) -> Expr {
     match self {
@@ -184,6 +202,10 @@ impl Expr {
     }
   }
 }
+
+/*
+  Evaluation of expressions
+*/
 
 impl Expr {
   pub fn eval(&self) -> Expr {
@@ -282,6 +304,9 @@ impl Expr {
 
 }
 
+/*
+  Calculus operations on Expr
+*/
 impl Expr {
   
   pub fn diff(&self, wrt: &String) -> Expr {
@@ -407,37 +432,9 @@ impl Expr {
 
 }
 
-impl Add for Expr {
-  type Output = Expr;
-
-  fn add(self, other: Expr) -> Expr {
-    Expr::Add(Box::new(self), Box::new(other))
-  }
-}
-
-impl Sub for Expr {
-  type Output = Expr;
-
-  fn sub(self, other: Expr) -> Expr {
-    Expr::Sub(Box::new(self), Box::new(other))
-  }
-}
-
-impl ops::Mul for Expr {
-  type Output = Expr;
-
-  fn mul(self, other: Expr) -> Expr {
-    Expr::Mul(Box::new(self), Box::new(other))
-  }
-}
-
-impl ops::Div for Expr {
-  type Output = Expr;
-
-  fn div(self, other: Expr) -> Expr {
-    Expr::Div(Box::new(self), Box::new(other))
-  }
-}
+/*
+  Matrix struct with implementations
+*/
 
 pub struct Matrix {
   data: Vec<Vec<Expr>>,
@@ -446,6 +443,10 @@ pub struct Matrix {
 }
 
 impl Matrix {
+  /**
+   * Turns a matrix of expressions into a matrix of floats. If this is possible,
+   * returns Some(matrix::Matrix), otherwise, returns None.
+   */
   pub fn to_float_matrix(&self) -> Option<matrix::Matrix> {
     // try to evaluate each element of the matrix to a number
     // if this is not possible, return None
@@ -469,6 +470,9 @@ impl Matrix {
   }
 }
 
+/*
+  Substitution in Matrix
+*/
 impl Matrix {
   pub fn subs(&self, var: &String, val: Expr) -> Matrix {
     let mut new_data = Vec::new();
@@ -487,6 +491,9 @@ impl Matrix {
   }
 }
 
+/*
+  Evaluation of Matrix
+*/
 impl Matrix {
   pub fn eval(&self) -> Matrix {
     let mut new_data = Vec::new();
@@ -505,6 +512,9 @@ impl Matrix {
   }
 }
 
+/*
+  Display implementation for Matrix
+*/
 impl std::fmt::Display for Matrix {
   fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
     let mut s = String::new();
@@ -525,3 +535,149 @@ impl std::fmt::Display for Matrix {
   }
 }
 
+/*
+  Constructors for expressions
+*/
+
+pub fn n(n: f64) -> Expr {
+  Expr::Num(n)
+}
+
+pub fn e() -> Expr {
+  Expr::Const(ConstantToken::E)
+}
+
+pub fn pi() -> Expr {
+  Expr::Const(ConstantToken::Pi)
+}
+
+pub fn ln(x: Expr) -> Expr {
+  Expr::App(Fun::Ln, Box::new(x))
+}
+
+pub fn relu(x: Expr) -> Expr {
+  Expr::App(Fun::ReLU, Box::new(x))
+}
+
+pub fn relu_prime(x: Expr) -> Expr {
+  Expr::App(Fun::ReLUPrime, Box::new(x))
+}
+
+pub fn var(v: &str) -> Expr {
+  Expr::Var(v.to_string())
+}
+
+/*
+  Arithmetic operations for expressions
+*/
+
+/*
+  Add
+*/
+impl Add for Expr {
+  type Output = Expr;
+
+  fn add(self, other: Expr) -> Expr {
+    Expr::Add(Box::new(self), Box::new(other))
+  }
+}
+
+impl Add<Expr> for f64 {
+  type Output = Expr;
+
+  fn add(self, other: Expr) -> Expr {
+    Expr::Add(Box::new(Expr::Num(self)), Box::new(other))
+  }
+}
+
+impl Add<f64> for Expr {
+  type Output = Expr;
+
+  fn add(self, other: f64) -> Expr {
+    Expr::Add(Box::new(self), Box::new(Expr::Num(other)))
+  }
+}
+
+/*
+  Sub
+*/
+
+impl Sub for Expr {
+  type Output = Expr;
+
+  fn sub(self, other: Expr) -> Expr {
+    Expr::Sub(Box::new(self), Box::new(other))
+  }
+}
+
+impl Sub<Expr> for f64 {
+  type Output = Expr;
+
+  fn sub(self, other: Expr) -> Expr {
+    Expr::Sub(Box::new(Expr::Num(self)), Box::new(other))
+  }
+}
+
+impl Sub<f64> for Expr {
+  type Output = Expr;
+
+  fn sub(self, other: f64) -> Expr {
+    Expr::Sub(Box::new(self), Box::new(Expr::Num(other)))
+  }
+}
+
+
+/*
+  Mul
+*/
+impl ops::Mul for Expr {
+  type Output = Expr;
+
+  fn mul(self, other: Expr) -> Expr {
+    Expr::Mul(Box::new(self), Box::new(other))
+  }
+}
+
+impl ops::Mul<Expr> for f64 {
+  type Output = Expr;
+
+  fn mul(self, other: Expr) -> Expr {
+    Expr::Mul(Box::new(Expr::Num(self)), Box::new(other))
+  }
+}
+
+impl ops::Mul<f64> for Expr {
+  type Output = Expr;
+
+  fn mul(self, other: f64) -> Expr {
+    Expr::Mul(Box::new(self), Box::new(Expr::Num(other)))
+  }
+}
+
+/*
+  Div
+*/
+
+impl ops::Div for Expr {
+  type Output = Expr;
+
+  fn div(self, other: Expr) -> Expr {
+    Expr::Div(Box::new(self), Box::new(other))
+  }
+}
+
+impl ops::Div<Expr> for f64 {
+  type Output = Expr;
+
+  fn div(self, other: Expr) -> Expr {
+    Expr::Div(Box::new(Expr::Num(self)), Box::new(other))
+  }
+}
+
+impl ops::Div<f64> for Expr {
+  type Output = Expr;
+
+  fn div(self, other: f64) -> Expr {
+    Expr::Div(Box::new(self), Box::new(Expr::Num(other)))
+  }
+}

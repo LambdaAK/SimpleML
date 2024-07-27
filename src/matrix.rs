@@ -2,9 +2,11 @@ use std::ops;
 
 pub struct Matrix {
     pub data: Vec<Vec<f64>>,
-    rows: usize,
-    cols: usize
+    pub rows: usize,
+    pub cols: usize
 }
+
+
 
 impl std::fmt::Display for Matrix {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -78,6 +80,30 @@ impl ops::Sub<Matrix> for Matrix {
             rows: self.rows,
             cols: self.cols
         }
+    }
+}
+
+impl ops::Sub<Matrix> for &Matrix {
+    type Output = Matrix;
+
+    fn sub(self, rhs: Matrix) -> Matrix {
+        self.clone() - rhs
+    }
+}
+
+impl ops::Sub<&Matrix> for Matrix {
+    type Output = Matrix;
+
+    fn sub(self, rhs: &Matrix) -> Matrix {
+        &self - rhs
+    }
+}
+
+impl ops::Sub<&Matrix> for &Matrix {
+    type Output = Matrix;
+
+    fn sub(self, rhs: &Matrix) -> Matrix {
+        self.clone() - rhs.clone()
     }
 }
 
@@ -345,6 +371,29 @@ impl Matrix {
 
     }
 
+    pub fn into_vec(&self) -> Vec<f64> {
+        // must have either 1 row or 1 column (or both)
+        if self.rows != 1 && self.cols != 1 {
+            panic!("Matrix must be a vector in Matrix::into_vec()")
+        };
+
+        let mut vec = Vec::new();
+
+        if self.rows == 1 {
+            for i in 0 .. self.cols {
+                vec.push(self.data[0][i])
+            }
+        }
+
+        else {
+            for i in 0 .. self.rows {
+                vec.push(self.data[i][0])
+            }
+        }
+        
+        return vec;
+    }
+
     pub fn mul_pointwise(&self, x: &Matrix) -> Matrix {
 
         // dimensions must be exactly the same
@@ -418,6 +467,11 @@ impl Matrix {
         // take the square root of the inner product
 
         return Ok(inner_product.data[0][0].sqrt());
+    }
+
+    pub fn euclidean_distance(&self, x: &Matrix) -> Result<f64, String> {
+        let diff = self - x;
+        diff.euclidean_norm()
     }
 }
 
