@@ -60,6 +60,8 @@ impl ops::Add<Matrix> for Matrix {
 }
 
 
+
+
 impl ops::Sub<Matrix> for Matrix {
     type Output = Matrix;
 
@@ -472,6 +474,29 @@ impl Matrix {
     pub fn euclidean_distance(&self, x: &Matrix) -> Result<f64, String> {
         let diff = self - x;
         diff.euclidean_norm()
+    }
+}
+
+impl Matrix {
+    pub fn eye(n: usize) -> Matrix {
+        let mut vec = Vec::new();
+        for i in 0..n {
+            let mut row = Vec::new();
+            for j in 0..n {
+                if i == j {
+                    row.push(1.0);
+                }
+                else {
+                    row.push(0.0);
+                }
+            }
+            vec.push(row);
+        }
+        Matrix {
+            data: vec,
+            rows: n,
+            cols: n
+        }
     }
 }
 
