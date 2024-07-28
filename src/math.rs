@@ -188,6 +188,7 @@ impl Expr {
           Expr::Pow(Box::new(new_a), Box::new(new_b))
         },
         Expr::App(f, a) => {
+          println!("aaaaaaaaa");
           let new_a = a.subs(var, val);
           Expr::App(f.clone(), Box::new(new_a))
         }
@@ -286,7 +287,9 @@ impl Expr {
         let new_a = a.eval();
         match (f, &new_a) {
           (Fun::Ln, Expr::Num(x)) => Expr::Num(x.ln()),
-          _ => Expr::App(f.clone(), Box::new(new_a.clone()))
+          (Fun::ReLU, Expr::Num(x)) => Expr::Num(x.max(0.0)),
+          (Fun::ReLUPrime, Expr::Num(x)) => Expr::Num(if x > &0.0 { 1.0 } else { 0.0 }),
+          _ => Expr::App(f.clone(), Box::new(new_a))
         }
       },
 
@@ -437,7 +440,7 @@ impl Expr {
 */
 
 pub struct Matrix {
-  data: Vec<Vec<Expr>>,
+  pub data: Vec<Vec<Expr>>,
   rows: usize,
   cols: usize,
 }
@@ -506,6 +509,24 @@ impl Matrix {
     }
     Matrix {
       data: new_data,
+      rows: self.rows,
+      cols: self.cols
+    }
+  }
+}
+
+impl Clone for Matrix {
+  fn clone(&self) -> Self {
+    let mut data = Vec::new();
+    for i in 0..self.rows {
+      let mut row = Vec::new();
+      for j in 0..self.cols {
+        row.push(self.data[i][j].clone());
+      }
+      data.push(row);
+    }
+    Matrix {
+      data,
       rows: self.rows,
       cols: self.cols
     }
@@ -679,5 +700,11 @@ impl ops::Div<f64> for Expr {
 
   fn div(self, other: f64) -> Expr {
     Expr::Div(Box::new(self), Box::new(Expr::Num(other)))
+  }
+}
+
+impl Expr {
+  pub fn pow(&self, other: Expr) -> Expr {
+    Expr::Pow(Box::new(self.clone()), Box::new(other))
   }
 }

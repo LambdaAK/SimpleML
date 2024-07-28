@@ -1,4 +1,4 @@
-use std::ops;
+use std::{fmt::{Display, Formatter}, ops::{self, IndexMut}};
 
 pub struct Matrix {
     pub data: Vec<Vec<f64>>,
@@ -21,6 +21,7 @@ impl std::fmt::Display for Matrix {
         write!(f, "{}", s)
     }
 }
+
 
 /*
 Matrix operations
@@ -58,8 +59,6 @@ impl ops::Add<Matrix> for Matrix {
         &self + &rhs
     }
 }
-
-
 
 
 impl ops::Sub<Matrix> for Matrix {
@@ -241,6 +240,9 @@ impl Matrix {
     }
 
     pub fn det(&self) -> f64 {
+
+        println!("computing determinant of matrix: \n{}", self);
+
         if (self.rows != self.cols) {
             panic!("Matrix is not square");
         }
@@ -294,8 +296,11 @@ impl Matrix {
 
     pub fn adjugate(&self) -> Matrix {
 
+        println!("computing adjugate of matrix: \n{}", self);
+
         let mut adjugate_matrix = Vec::new();
         for i in 0..self.rows {
+            println!("i: {}", i);
             let mut row = Vec::new();
             for j in 0..self.cols {
                 let cofactor = self.cofactor(i, j);
@@ -500,6 +505,108 @@ impl Matrix {
     }
 }
 
+pub struct RowVec {
+    data: Vec<f64>,
+    cols: usize
+}
+
+pub struct ColVec {
+    data: Vec<f64>,
+    rows: usize
+}
+
+impl RowVec {
+    pub fn new (data: &Vec<f64>) -> RowVec {
+        RowVec {
+            data: data.clone(),
+            cols: data.len()
+        }
+    }
+
+    pub fn t(&self) -> ColVec {
+        ColVec {
+            data: self.data.clone(),
+            rows: self.cols
+        }
+    }
+
+    pub fn as_matrix(&self) -> Matrix {
+        Matrix::row_vec(self.data.as_slice())
+    }
+
+}
+
+impl ColVec {
+    pub fn new(data: Vec<f64>) -> ColVec {
+        ColVec {
+            data: data.clone(),
+            rows: data.len()
+        }
+    }
+
+    pub fn t(&self) -> RowVec {
+        RowVec {
+            data: self.data.clone(),
+            cols: self.rows
+        }
+    }
+
+    pub fn as_matrix(&self) -> Matrix {
+        Matrix::col_vec(self.data.as_slice())
+    }
+}
+
+impl Display for RowVec {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let mut s = String::new();
+        for i in 0..self.cols {
+            s.push_str(&self.data[i].to_string());
+            s.push_str(" ");
+        }
+        write!(f, "{}", s)
+    }
+}
+
+impl Display for ColVec {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let mut s = String::new();
+        for i in 0..self.rows {
+            s.push_str(&self.data[i].to_string());
+            s.push_str("\n");
+        }
+        write!(f, "{}", s)
+    }
+}
+
+// indexing for vectors
+
+impl ops::Index<usize> for RowVec {
+    type Output = f64;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.data[index]
+    }
+}
+
+impl ops::Index<usize> for ColVec {
+    type Output = f64;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.data[index]
+    }
+}
+
+impl IndexMut<usize> for RowVec {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        &mut self.data[index]
+    }
+}
+
+impl IndexMut<usize> for ColVec {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        &mut self.data[index]
+    }
+}
 
 
 #[cfg(test)]

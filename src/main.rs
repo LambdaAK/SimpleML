@@ -1,5 +1,6 @@
 mod matrix;
 use math::Expr;
+use matrix::ColVec;
 use crate::matrix::Matrix;
 mod perceptron;
 use crate::perceptron::Perceptron;
@@ -8,6 +9,7 @@ mod token;
 mod parser;
 mod KNN;
 mod lr;
+mod optim;
 
 
 // Macro to create a matrix
@@ -30,30 +32,51 @@ macro_rules! matrix {
   };
 }
 
+macro_rules! row_vec {
+  ( $( $x:expr ),* ) => {
+      {
+          let data = vec![
+              vec![$($x),*]
+          ];
+          let rows = data.len();
+          let cols = if rows > 0 { data[0].len() } else { 0 };
+          Matrix {
+              data,
+              rows,
+              cols,
+          }
+      }
+  };
+}
+
+macro_rules! col_vec {
+  ( $( $x:expr ),* ) => {
+      {
+          let data = vec![
+              $(
+                  vec![$x],
+              )*
+          ];
+          let rows = data.len();
+          let cols = if rows > 0 { data[0].len() } else { 0 };
+          Matrix {
+              data,
+              rows,
+              cols,
+          }
+      }
+  };
+}
+
 fn main() {
+  let f = math::relu(math::var("x").pow(math::n(2.0)) + 1000.0);
+  let optim = optim::Optim::new(0.001, 10000);
 
-  let x = matrix![
-    [1.0],
-    [2.0],
-    [3.0],
-    [4.0],
-    [5.0],
-    [6.0],
-    [7.0],
-    [8.0]
-  ];
+  let minimizer: ColVec = optim.optimize(&f);
 
-  let y = matrix![
-    [1.1],
-    [2.05],
-    [3.21],
-    [4.1],
-    [4.9999],
-    [6.0],
-    [7.0],
-    [8.0]
-  ];
+  println!("The minimizer of {} is \n{}", f, minimizer);
 
-  let lr = lr::LinearRegression::new(x, y);
+  println!("gradient function is: {}", f.grad(f.vars()));
+
   
 }
