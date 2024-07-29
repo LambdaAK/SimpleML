@@ -71,17 +71,14 @@ macro_rules! col_vec {
 
 fn main() {
 
-    // compute how long it takes to compute the inverse of the n by n identity matrix
-    // for each n in range 1 to 50
+    let m = matrix![[1134134.0, 2.0, 3.0], [4.51341134, 5.0, 6.0], [135315137.0, 8.0, 9.0]];
+    let inv = m.inverse().unwrap();
 
-    for n in 1..50 {
-        let start = SystemTime::now();
-        let mut id = matrix::Matrix::eye(n);
-        let _ = id.inverse();
-        let elapsed = start.elapsed().unwrap();
-        println!("{}: {}", n, elapsed.as_millis());
-    }
+    let id1 = &inv * &m;
+    let id2 = &m * &inv;
 
+    println!("id1: \n{}", id1);
+    println!("id2: \n{}", id2);
 
 }
 

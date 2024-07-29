@@ -23,7 +23,7 @@ impl LinearRegression {
 
     println!("A");
 
-    let w = w.inverse();
+    let w = w.inverse_old();
 
     println!("B");
 

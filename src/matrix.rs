@@ -272,8 +272,6 @@ impl Matrix {
     }
 
 
-
-
     pub fn minor(&self, row: usize, col: usize) -> Matrix {
         let mut sub_matrix: Vec<Vec<f64>> = Vec::new();
         for i in 0..self.rows {
@@ -330,7 +328,7 @@ impl Matrix {
         return adj.t();
     }
 
-    pub fn inverse(&self) -> Matrix {
+    pub fn inverse_old(&self) -> Matrix {
         let det = self.det();
         if det == 0.0 {
             panic!("Matrix is singular and cannot be inverted");
@@ -339,6 +337,76 @@ impl Matrix {
 
         let inverse = adjugate * (1.0 / det);
         return inverse;
+    }
+
+    pub fn inverse(&self) -> Option<Matrix> {
+        if self.rows != self.cols {
+            panic!("Matrix is not square, failure to compute determinant");
+        }
+    
+        let mut acc = Self::eye(self.rows());
+        let mut m = self.clone();
+        
+        for row_num in 0..m.rows() {
+            // Find the first row that has a non-zero element in the row_num-th position
+            let mut row_num_non_zero = row_num;
+            let mut found = false;
+    
+            while row_num_non_zero < m.rows() {
+                if m.get(row_num_non_zero, row_num) != 0.0 {
+                    found = true;
+                    break;
+                }
+                row_num_non_zero += 1;
+            }
+    
+            if !found {
+                // This matrix is not invertible, so the determinant is 0
+                return Option::None;
+            }
+    
+            // Swap the rows and update acc, if needed
+            if row_num_non_zero != row_num {
+                m = m.swap_rows(row_num, row_num_non_zero);
+                acc = acc.swap_rows(row_num, row_num_non_zero);
+            }
+    
+            // Scale the row so that the row_num-th element is 1
+            let scale = 1.0 / m.get(row_num, row_num);
+    
+            for j in 0..m.cols() {
+                m.data[row_num][j] *= scale;
+                acc.data[row_num][j] *= scale;
+            }
+    
+            // Eliminate the row_num-th element from all rows below
+            for row_below in row_num + 1..m.rows() {
+                let factor = m.get(row_below, row_num);
+                for j in 0..m.cols() {
+                    m.data[row_below][j] -= factor * m.get(row_num, j);
+                    acc.data[row_below][j] -= factor * acc.get(row_num, j);
+                }
+            }
+        }
+
+        // now, m is in row-echelon form.
+        // We need to put it into reduced row-echelon form
+
+        for row_num in (0 .. m.rows()).rev() {
+            // we know that the row_num-th element of the row_num-th row is 1
+            // we want to subtract some multiple of the row_num-th row from all rows to make the row_num-th element of all rows above the row_num-th row 0
+            for row_above in (0 .. row_num).rev() {
+                let factor = m.get(row_above, row_num);
+                for j in 0 .. m.cols() {
+                    m.data[row_above][j] -= factor * m.get(row_num, j);
+                    acc.data[row_above][j] -= factor * acc.get(row_num, j);
+                }
+            }
+        }
+
+        // m is now the identity matrix, so acc is the inverse of the original matrix
+
+        return Option::Some(acc);
     }
 
 
