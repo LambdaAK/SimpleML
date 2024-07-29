@@ -71,23 +71,16 @@ macro_rules! col_vec {
 
 fn main() {
 
-    let m = matrix![[1134134.0, 2.0, 3.0], [4.51341134, 5.0, 6.0], [135315137.0, 8.0, 9.0]];
-    let inv = m.inverse().unwrap();
+    let m = col_vec![1.0, 2.0, 3.0, 4.4];
 
-    let id1 = &inv * &m;
-    let id2 = &m * &inv;
+    let labels = col_vec![2.0, 4.0, 4.0, 8.89];
 
-    println!("id1: \n{}", id1);
-    println!("id2: \n{}", id2);
+    let lr = lr::LinearRegression::new(m, labels);
+
+    let x = col_vec![100.0];
+
+    let pred = lr.predict(x);
+
+    println!("pred: {}", pred);
 
 }
-
-/*
-5: 10
-6: 70
-7: 450
-8: 4000
-9: 43400
-10: too long
-
-*/

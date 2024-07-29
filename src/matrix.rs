@@ -367,8 +367,8 @@ impl Matrix {
     
             // Swap the rows and update acc, if needed
             if row_num_non_zero != row_num {
-                m = m.swap_rows(row_num, row_num_non_zero);
-                acc = acc.swap_rows(row_num, row_num_non_zero);
+                m.swap_rows_mut(row_num, row_num_non_zero);
+                acc.swap_rows_mut(row_num, row_num_non_zero);
             }
     
             // Scale the row so that the row_num-th element is 1
@@ -588,14 +588,15 @@ impl Matrix {
 
 impl Matrix {
     pub fn swap_rows(&self, i: usize, j: usize) -> Matrix {
-        let mut vec = self.data.clone();
-        vec.swap(i, j);
-        Matrix {
-            data: vec,
-            rows: self.rows,
-            cols: self.cols
-        }
+        let mut m = self.clone();
+        m.swap_rows_mut(i, j);
+        return m;
     }
+
+    pub fn swap_rows_mut(&mut self, i: usize, j: usize) {
+        self.data.swap(i, j);
+    }
+
 }
 
 impl Matrix {

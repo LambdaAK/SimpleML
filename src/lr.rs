@@ -47,4 +47,9 @@ impl LinearRegression {
     }
 
   }
+
+  pub fn predict(&self, x: Matrix) -> Matrix {
+    &self.w * &x
+  }
+
 }
