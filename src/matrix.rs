@@ -239,25 +239,40 @@ impl Matrix {
         }
     }
 
-    pub fn det(&self) -> f64 {
+    pub fn lu_decomposition(&self) -> (Matrix, Matrix) {
+        // LU decomposition
+        // A = LU
+        // L is a lower triangular matrix
+        // U is an upper triangular matrix
 
-        println!("computing determinant of matrix: \n{}", self);
-
-        if (self.rows != self.cols) {
+        // make sure the matrix is square
+        if self.rows != self.cols {
             panic!("Matrix is not square");
         }
-        if self.rows == 1 {
-            return self.data[0][0]
+
+        let n = self.rows;
+
+        let mut l = Matrix::eye(n);
+        let mut u = self.clone();
+
+        for i in 0..n {
+            for j in i+1..n {
+
+                let factor = u.data[j][i] / u.data[i][i];
+
+                
+                l.data[j][i] = factor;
+                for k in i..n {
+                    u.data[j][k] -= factor * u.data[i][k];
+                }
+            }
         }
 
-        let mut det = 0.0;
-        for i in 0..self.cols {
-            let cofactor = self.data[0][i] * self.cofactor(0, i);
-            det += cofactor;
-        }
-        return det;
-        
+        return (l, u);
     }
+
+
+
 
     pub fn minor(&self, row: usize, col: usize) -> Matrix {
         let mut sub_matrix: Vec<Vec<f64>> = Vec::new();
@@ -296,11 +311,8 @@ impl Matrix {
 
     pub fn adjugate(&self) -> Matrix {
 
-        println!("computing adjugate of matrix: \n{}", self);
-
         let mut adjugate_matrix = Vec::new();
         for i in 0..self.rows {
-            println!("i: {}", i);
             let mut row = Vec::new();
             for j in 0..self.cols {
                 let cofactor = self.cofactor(i, j);
@@ -324,6 +336,7 @@ impl Matrix {
             panic!("Matrix is singular and cannot be inverted");
         }
         let adjugate = self.adjugate();
+
         let inverse = adjugate * (1.0 / det);
         return inverse;
     }
@@ -503,6 +516,87 @@ impl Matrix {
             cols: n
         }
     }
+}
+
+impl Matrix {
+    pub fn swap_rows(&self, i: usize, j: usize) -> Matrix {
+        let mut vec = self.data.clone();
+        vec.swap(i, j);
+        Matrix {
+            data: vec,
+            rows: self.rows,
+            cols: self.cols
+        }
+    }
+}
+
+impl Matrix {
+    pub fn get(&self, i: usize, j: usize) -> f64 {
+        self.data[i][j]
+    }
+}
+
+impl Matrix {
+    pub fn det(&self) -> f64 {
+        if self.rows != self.cols {
+            panic!("Matrix is not square, failure to compute determinant");
+        }
+    
+        let mut acc: f64 = 1.0;
+        let mut m = self.clone();
+        
+        for row_num in 0..m.rows() {
+            // Find the first row that has a non-zero element in the row_num-th position
+            let mut row_num_non_zero = row_num;
+            let mut found = false;
+    
+            while row_num_non_zero < m.rows() {
+                if m.get(row_num_non_zero, row_num) != 0.0 {
+                    found = true;
+                    break;
+                }
+                row_num_non_zero += 1;
+            }
+    
+            if !found {
+                // This matrix is not invertible, so the determinant is 0
+                return 0.0;
+            }
+    
+            // Swap the rows and update acc, if needed
+            if row_num_non_zero != row_num {
+                m = m.swap_rows(row_num, row_num_non_zero);
+                acc *= -1.0;
+            }
+    
+            // Scale the row so that the row_num-th element is 1
+            let scale = 1.0 / m.get(row_num, row_num);
+    
+            for j in 0..m.cols() {
+                m.data[row_num][j] *= scale;
+            }
+    
+            // Update acc
+            acc /= scale;
+    
+            // Eliminate the row_num-th element from all rows below
+            for row_below in row_num + 1..m.rows() {
+                let factor = m.get(row_below, row_num);
+                for j in 0..m.cols() {
+                    m.data[row_below][j] -= factor * m.get(row_num, j);
+                }
+            }
+        }
+    
+        // Multiply the diagonal elements into acc
+        for i in 0..m.rows() {
+            acc *= m.get(i, i);
+        }
+    
+        // acc is now the determinant of the matrix
+        return acc;
+    }
+    
 }
 
 pub struct RowVec {
