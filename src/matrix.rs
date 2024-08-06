@@ -1,12 +1,31 @@
 use std::{fmt::{Display, Formatter}, ops::{self, IndexMut}};
 
+// Macro to create a matrix
+macro_rules! matrix {
+    ( $( [ $( $x:expr ),* ] ),* ) => {
+        {
+            let data: Vec<Vec<f64>> = vec![
+                $(
+                    vec![$($x),*],
+                )*
+            ];
+            let rows = data.len();
+            let cols = if rows > 0 { data[0].len() } else { 0 };
+            Matrix {
+                data,
+                rows,
+                cols,
+            }
+        }
+    };
+  }
+
+#[derive(Debug)]
 pub struct Matrix {
     pub data: Vec<Vec<f64>>,
     pub rows: usize,
     pub cols: usize
 }
-
-
 
 impl std::fmt::Display for Matrix {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -22,6 +41,29 @@ impl std::fmt::Display for Matrix {
     }
 }
 
+impl Matrix {
+
+    pub fn random(rows: usize, cols: usize) -> Matrix {
+        let mut vec = Vec::new();
+        for _ in 0..rows {
+            let mut row = Vec::new();
+            for _ in 0 .. cols {
+                let val: f64 = rand::random::<f32>() as f64;
+                // negate it with 50% probability
+                let val = if rand::random::<bool>() {val} else {-val};
+                row.push(val);
+            }
+            vec.push(row);
+        }
+
+        Matrix {
+            data: vec,
+            rows,
+            cols
+        }
+    }
+}
+
 
 /*
 Matrix operations
@@ -29,6 +71,9 @@ Matrix operations
 Matrix operations take references to matrices as arguments and return a new matrix
 */
 
+// Binary operations for matrices
+
+// addition
 impl ops::Add<&Matrix> for &Matrix {
     type Output = Matrix;
 
@@ -60,11 +105,27 @@ impl ops::Add<Matrix> for Matrix {
     }
 }
 
-
-impl ops::Sub<Matrix> for Matrix {
+impl ops::Add<&Matrix> for Matrix {
     type Output = Matrix;
 
-    fn sub(self, rhs: Matrix) -> Matrix {
+    fn add(self, rhs: &Matrix) -> Matrix {
+        &self + rhs
+    }
+}
+
+impl ops::Add<Matrix> for &Matrix {
+    type Output = Matrix;
+
+    fn add(self, rhs: Matrix) -> Matrix {
+        self + &rhs
+    }
+}
+
+// subtraction
+impl ops::Sub<&Matrix> for &Matrix {
+    type Output = Matrix;
+
+    fn sub(self, rhs: &Matrix) -> Matrix {
         if self.rows != rhs.rows || self.cols != rhs.cols {
             panic!("Matrix dimensions do not match");
         }
@@ -84,27 +145,19 @@ impl ops::Sub<Matrix> for Matrix {
     }
 }
 
-impl ops::Sub<Matrix> for &Matrix {
+impl ops::Sub<Matrix> for Matrix {
     type Output = Matrix;
 
     fn sub(self, rhs: Matrix) -> Matrix {
-        self.clone() - rhs
+        &self - &rhs
     }
 }
 
-impl ops::Sub<&Matrix> for Matrix {
+impl ops::Mul<&Matrix> for Matrix {
     type Output = Matrix;
 
-    fn sub(self, rhs: &Matrix) -> Matrix {
-        &self - rhs
-    }
-}
-
-impl ops::Sub<&Matrix> for &Matrix {
-    type Output = Matrix;
-
-    fn sub(self, rhs: &Matrix) -> Matrix {
-        self.clone() - rhs.clone()
+    fn mul(self, rhs: &Matrix) -> Matrix {
+        &self * rhs
     }
 }
 
@@ -112,7 +165,6 @@ impl ops::Mul<&Matrix> for &Matrix {
     type Output = Matrix;
 
     fn mul(self, rhs: &Matrix) -> Matrix {
-
         if self.cols != rhs.rows {
             panic!("Matrix dimensions do not match");
         }
@@ -136,6 +188,14 @@ impl ops::Mul<&Matrix> for &Matrix {
     }
 }
 
+impl ops::Mul<Matrix> for &Matrix {
+    type Output = Matrix;
+
+    fn mul(self, rhs: Matrix) -> Matrix {
+        self * &rhs
+    }
+}
+
 impl ops::Mul<Matrix> for Matrix {
     type Output = Matrix;
 
@@ -144,10 +204,13 @@ impl ops::Mul<Matrix> for Matrix {
     }
 }
 
-impl ops::Mul<&f64> for &Matrix {
+
+
+// scalar multiplication
+impl ops::Mul<f64> for &Matrix {
     type Output = Matrix;
 
-    fn mul(self, rhs: &f64) -> Matrix {
+    fn mul(self, rhs: f64) -> Matrix {
         let mut vec = Vec::new();
         for i in 0..self.rows {
             let mut row = Vec::new();
@@ -168,7 +231,15 @@ impl ops::Mul<f64> for Matrix {
     type Output = Matrix;
 
     fn mul(self, rhs: f64) -> Matrix {
-        &self * &rhs
+        &self * rhs
+    }
+}
+
+impl ops::Mul<&Matrix> for f64 {
+    type Output = Matrix;
+
+    fn mul(self, rhs: &Matrix) -> Matrix {
+        rhs * self
     }
 }
 
@@ -176,24 +247,13 @@ impl ops::Mul<Matrix> for f64 {
     type Output = Matrix;
 
     fn mul(self, rhs: Matrix) -> Matrix {
-        let mut vec = Vec::new();
-        for i in 0..rhs.rows {
-            let mut row = Vec::new();
-            for j in 0..rhs.cols {
-                row.push(rhs.data[i][j] * self);
-            }
-            vec.push(row);
-        }
-        Matrix {
-            data: vec,
-            rows: rhs.rows,
-            cols: rhs.cols
-        }
+        &rhs * self
     }
 }
 
 impl Clone for Matrix {
     fn clone(&self) -> Self {
+        println!("CLONING MATRIX");
         Self { data: self.data.clone(), rows: self.rows.clone(), cols: self.cols.clone() }
     }
 }
@@ -668,6 +728,30 @@ impl Matrix {
     
 }
 
+impl PartialEq for Matrix {
+    fn eq(&self, other: &Self) -> bool {
+        // check if the dimensions are the same
+        if self.rows != other.rows || self.cols != other.cols {
+            return false;
+        }
+
+        let epsilon = 1e-6;
+
+        // each pair of entries must be within epsilon of each other
+
+        for i in 0..self.rows {
+            for j in 0..self.cols {
+                if (self.data[i][j] - other.data[i][j]).abs() > epsilon {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+
+    }
+}
+
 pub struct RowVec {
     data: Vec<f64>,
     cols: usize
@@ -705,6 +789,14 @@ impl ColVec {
             data: data.clone(),
             rows: data.len()
         }
+    }
+
+    pub fn get(&self, i: usize) -> f64 {
+        self.data[i]
+    }
+
+    pub fn rows(&self) -> usize {
+        self.rows
     }
 
     pub fn t(&self) -> RowVec {
@@ -778,7 +870,74 @@ mod tests {
 
   #[test]
   fn test_matrix_addition() {
-    assert_eq!(1, 1)
+  
+    
+    let m1 = matrix![[1.0, 2.0], [3.0, 4.0]];
+    let m2 = matrix![[5.0, 6.0], [7.0, 8.0]];
+    let m3 = matrix![[6.0, 8.0], [10.0, 12.0]];
+
+    assert_eq!(m1 + m2, m3);
+
+    let m1 = matrix![[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]];
+    let m2 = matrix![[5.0, 6.0], [7.0, 8.0], [9.0, 10.0]];
+    let m3 = matrix![[6.0, 8.0], [10.0, 12.0], [14.0, 16.0]];
+
+    assert_eq!(m1 + m2, m3);
+
+    let m1 = matrix![[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]];
+    let m2 = matrix![[5.0, 6.0], [7.0, 8.0], [9.0, 10.0]];
+    let m3 = matrix![[6.0, 8.0], [10.0, 12.0], [14.0, 16.0]];
+
+    assert_eq!(&m1 + &m2, m3);
+
+    assert_eq!(&m1 + &m1, 2.0 * &m1);
+
+    let m1 = matrix![[1.0, 2.0], [3.0, 4.0]];
+    let m2 = matrix![[5.0, 6.0], [7.0, 8.0]];
+    let m3 = /* diff */ matrix![[-4.0, -4.0], [-4.0, -4.0]];
+
+    assert_eq!(m1 - m2, m3);
+
+    
+  }
+
+    #[test]
+  fn id() {
+    for _ in 0 .. 10000 {
+        let dim = rand::random::<usize>() % 10 + 1;
+        let m = Matrix::random(dim, dim);
+        let id = Matrix::eye(dim);
+        assert_eq!(&m * &id, m);
+        assert_eq!(id * &m, m);
+    }
+
+    for _ in 0 .. 100 {
+        let dim = rand::random::<usize>() % 100 + 1;
+        let m = Matrix::random(dim, dim);
+        assert_eq!(&m * 1.0, m);
+        assert_eq!(1.0 * &m, m);
+    }
+
+    for _ in 0 .. 100 {
+        let dim = rand::random::<usize>() % 100 + 1;
+        let m = Matrix::random(dim, dim);
+        assert_eq!(&m * 0.0, Matrix::new(vec![vec![0.0; dim]; dim]));
+    }
+
+    for _ in 0 .. 100 {
+        let dim = rand::random::<usize>() % 10 + 1;
+
+        let a = Matrix::random(dim, dim);
+        let b = Matrix::random(dim, dim);
+        let c = Matrix::random(dim, dim);
+
+        assert_eq!(&a * (&b * &c), (&a * &b) * &c);
+        assert_eq!(&a * (&b + &c), &a * &b + &a * &c);
+        assert_eq!((&a + &b) * &c, &a * &c + &b * c);
+
+    }
+
   }
 
 }
+

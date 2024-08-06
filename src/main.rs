@@ -1,4 +1,5 @@
 mod matrix;
+use lr::LinearRegression;
 use math::Expr;
 use matrix::ColVec;
 use crate::matrix::Matrix;
@@ -11,7 +12,6 @@ mod KNN;
 mod lr;
 mod optim;
 use std::time::{SystemTime, UNIX_EPOCH};
-
 
 // Macro to create a matrix
 macro_rules! matrix {
@@ -70,17 +70,32 @@ macro_rules! col_vec {
 }
 
 fn main() {
+    
+    let mut inputs = Vec::new();
+    let mut outputs = Vec::new();
 
-    let m = col_vec![1.0, 2.0, 3.0, 4.4];
+    for i in 0 .. 20 {
+        inputs.push(i as f64);
+        outputs.push((2 * i + 3) as f64);
+    }
 
-    let labels = col_vec![2.0, 4.0, 4.0, 8.89];
+    let mut inputs2 = Vec::new();
+    inputs2.push(inputs);
+    let mut outputs2 = Vec::new();
+    outputs2.push(outputs);
 
-    let lr = lr::LinearRegression::new(m, labels);
+    let x = Matrix::new(inputs2).t();
+    let y = Matrix::new(outputs2).t();
 
-    let x = col_vec![100.0];
 
-    let pred = lr.predict(x);
+    let lr = LinearRegression::new_optim(x, y);
+   
+    println!("w: \n{}", lr.w);
+    println!("b: {}", lr.b);
 
-    println!("pred: {}", pred);
+    
+
+
+
 
 }

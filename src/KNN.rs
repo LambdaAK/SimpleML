@@ -2,6 +2,9 @@ use std::cmp::Ordering;
 
 use crate::matrix::Matrix;
 
+///
+/// A K-Nearest Neighbors model that can be trained and used to predict labels in a classification problem
+/// 
 pub struct KNN {
   k: i32,
   points: Vec<Matrix>,
@@ -9,6 +12,14 @@ pub struct KNN {
 }
 
 impl KNN {
+  ///
+  /// Create a new KNN model from training data and labels
+  /// 
+  /// # Arguments
+  /// 
+  /// `k` - The number of neighbors to consider when making a prediction
+  /// `x` - A matrix where each row is a point
+  /// `y` - A matrix where each row is the corresponding label
   pub fn new(k: i32, x: Matrix, y: Matrix) -> KNN {
 
     // each row of x is a point
@@ -26,12 +37,26 @@ impl KNN {
     }
    
   }
+
+  ///
+  /// Sort a vector of floats by another vector of floats
+  /// 
   fn sort_labels_by_floats(labels: Vec<f64>, distances: Vec<f64>) -> Vec<f64> {
     let mut zipped: Vec<(f64, f64)> = labels.iter().zip(distances.iter()).map(|(a, b)| (*a, *b)).collect();
     zipped.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
     zipped.iter().map(|(a, _)| *a).collect()
   }
 
+  ///
+  /// Predict the label of a point
+  /// 
+  /// # Arguments
+  /// 
+  /// `x` - A column vector representing a point
+  /// 
+  /// # Returns
+  /// 
+  /// The predicted label of the point
   pub fn predict(&self, x: Matrix) -> f64 {
     let mut distances:Vec<f64> = vec![];
 
