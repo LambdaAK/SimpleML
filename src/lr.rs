@@ -68,7 +68,7 @@ impl LinearRegression {
   /// Computes the weight vector using gradient descent
   /// This is efficient for large datasets
   /// 
-  pub fn new_optim(x: Matrix, y: Matrix) -> LinearRegression {
+  pub fn new_optim(x: Matrix, y: Matrix, lr: f64, iter: i32) -> LinearRegression {
     // x is a matrix where each row is a point
     // y is a matrix where each row is a label
 
@@ -104,12 +104,16 @@ impl LinearRegression {
       loss_function = loss_function + term;
 
     }
+
+    // divide the loss function by the number of points
+
+    loss_function = loss_function / Expr::Num(points.len() as f64);
     
     println!("loss function: {}", loss_function);
 
     // find the minimizer of the loss function
 
-    let optimizer = Optim::new(0.000001, 20000);
+    let optimizer = Optim::new(lr, iter);
 
     let minimizer = optimizer.optimize(&loss_function);
 

@@ -56,11 +56,6 @@ impl Optim {
       }
 
       grad = grad.eval();
-      if (i % 100 == 0) {
-        println!("iteration: {}", i);
-        println!("grad: {}", grad);
-      }
-  
 
       // convert grad to a math matrix
 
@@ -75,6 +70,9 @@ impl Optim {
 
         minimizer[i] = minimizer[i] - self.learning_rate * grad.data[i][0];
       }
+
+      println!("iteration: {}", i);
+      println!("minimizer: \n{}", minimizer);
       
     };
 

@@ -311,6 +311,26 @@ impl Expr {
   Calculus operations on Expr
 */
 impl Expr {
+
+  // Numerical differentiation
+  pub fn diff_num(&self, wrt: &String) -> Expr {
+    // The derivative is taken with respect to wrt
+    /*
+      The derivative is approximately (f(x + h) - f(x)) / h
+      for small h > 0
+    */
+
+    let h = 0.000001;
+
+    let x_plus_h = Expr::Var(wrt.clone()) + h;
+
+    let f_x_plus_h = self.subs(wrt, &x_plus_h).eval();
+
+    let f_x = self.eval();
+
+    (f_x_plus_h - f_x) / h
+  }
+
   
   pub fn diff(&self, wrt: &String) -> Expr {
 
@@ -399,7 +419,7 @@ impl Expr {
     // for each variable, compute the derivative of the expression with respect to that variable
     
     for var in &vars {
-      let deriv = self.diff(&var);
+      let deriv = self.diff_num(&var);
       let mut v = Vec::new();
       v.push(deriv);
       data.push(v);
@@ -600,6 +620,22 @@ impl Add for Expr {
 
   fn add(self, other: Expr) -> Expr {
     Expr::Add(Box::new(self), Box::new(other))
+  }
+}
+
+impl Add<&Expr> for Expr {
+  type Output = Expr;
+
+  fn add(self, other: &Expr) -> Expr {
+    Expr::Add(Box::new(self), Box::new(other.clone()))
+  }
+}
+
+impl Add<Expr> for &Expr {
+  type Output = Expr;
+
+  fn add(self, other: Expr) -> Expr {
+    Expr::Add(Box::new(self.clone()), Box::new(other))
   }
 }
 

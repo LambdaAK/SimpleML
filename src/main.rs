@@ -71,31 +71,27 @@ macro_rules! col_vec {
 
 fn main() {
     
-    let mut inputs = Vec::new();
-    let mut outputs = Vec::new();
+    let mut x_points = Vec::new();
 
     for i in 0 .. 20 {
-        inputs.push(i as f64);
-        outputs.push((2 * i + 3) as f64);
+        x_points.push(vec![i as f64]);
     }
 
-    let mut inputs2 = Vec::new();
-    inputs2.push(inputs);
-    let mut outputs2 = Vec::new();
-    outputs2.push(outputs);
+    let x = Matrix::new(x_points);
 
-    let x = Matrix::new(inputs2).t();
-    let y = Matrix::new(outputs2).t();
+    let mut y_points = Vec::new();
 
+    for i in 0 .. 20 {
+        y_points.push(vec![(2 * i + 5) as f64]);
+    }
 
-    let lr = LinearRegression::new_optim(x, y);
-   
-    println!("w: \n{}", lr.w);
+    let y = Matrix::new(y_points);
+
+    println!("x: \n{}", x);
+    println!("y: \n{}", y);
+
+    let lr = LinearRegression::new_optim(x, y, 0.0002, 1000000000);
+
+    println!("w: {}", lr.w);
     println!("b: {}", lr.b);
-
-    
-
-
-
-
 }
