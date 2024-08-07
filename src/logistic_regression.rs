@@ -10,7 +10,7 @@ pub struct LogisticRegression {
 }
 
 impl LogisticRegression {
-  fn compute_loss_function(x: Matrix, y: Matrix) -> Expr {
+  fn compute_loss_function(x: Matrix, y: Matrix, lambda: f64) -> Expr {
     let mut loss_function = Expr::Num(0.0);
 
     let points = x.rows_as_matrices();
@@ -53,13 +53,29 @@ impl LogisticRegression {
 
     loss_function = loss_function / Expr::Num(points.len() as f64) * Expr::Num(-1.0);
 
+    // add the regularization term, if lambda is not 0
+
+    if lambda <= 0.0 {
+      return loss_function
+    }
+
+    let mut reg_term = Expr::Num(0.0);
+
+    for i in 0 .. x.cols() {
+      reg_term = reg_term + var(&format!("w{}", i + 1)).pow(Expr::Num(2.0));
+    }
+
+    reg_term = lambda * reg_term;
+
+    loss_function = loss_function + reg_term;
+
     loss_function
   }
 
 
-  pub fn new(x: Matrix, y: Matrix) -> LogisticRegression {
+  pub fn new(x: Matrix, y: Matrix, lambda: f64) -> LogisticRegression {
     
-    let loss_function = Self::compute_loss_function(x.clone(), y.clone());
+    let loss_function = Self::compute_loss_function(x.clone(), y.clone(), lambda);
 
     println!("loss function: {}", loss_function);
 

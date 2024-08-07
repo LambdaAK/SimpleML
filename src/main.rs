@@ -99,7 +99,7 @@ fn main() {
         1.
     ];
 
-    let lr = LogisticRegression::new(x.clone(), y);
+    let lr = LogisticRegression::new(x.clone(), y, 0.00);
 
     // classify each point in x
 
@@ -107,9 +107,5 @@ fn main() {
         let prediction = lr.predict(point);
         println!("prediction: {}", prediction);
     }
-
-
-
-    
 
 }
