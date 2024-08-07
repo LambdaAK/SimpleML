@@ -1,4 +1,5 @@
 mod matrix;
+use logistic_regression::LogisticRegression;
 use lr::LinearRegression;
 use math::Expr;
 use matrix::ColVec;
@@ -12,6 +13,7 @@ mod KNN;
 mod lr;
 mod optim;
 use std::time::{SystemTime, UNIX_EPOCH};
+mod logistic_regression;
 
 // Macro to create a matrix
 macro_rules! matrix {
@@ -71,27 +73,43 @@ macro_rules! col_vec {
 
 fn main() {
     
-    let mut x_points = Vec::new();
+    let x = matrix![
+        [1., 1.],
+        [1., 2.],
+        [2., 2.],
+        [2., 3.],
+        [3., 3.],
+        [3., 4.],
+        [50., 51.],
+        [75., 101.],
+        [51., 61.],
+        [100., 101.]
+    ];
 
-    for i in 0 .. 20 {
-        x_points.push(vec![i as f64]);
+    let y = col_vec![
+        0.,
+        0.,
+        0.,
+        0.,
+        0.,
+        0.,
+        1.,
+        1.,
+        1.,
+        1.
+    ];
+
+    let lr = LogisticRegression::new(x.clone(), y);
+
+    // classify each point in x
+
+    for point in x.rows_as_matrices() {
+        let prediction = lr.predict(point);
+        println!("prediction: {}", prediction);
     }
 
-    let x = Matrix::new(x_points);
 
-    let mut y_points = Vec::new();
 
-    for i in 0 .. 20 {
-        y_points.push(vec![(2 * i + 5) as f64]);
-    }
+    
 
-    let y = Matrix::new(y_points);
-
-    println!("x: \n{}", x);
-    println!("y: \n{}", y);
-
-    let lr = LinearRegression::new_optim(x, y, 0.0002, 1000000000);
-
-    println!("w: {}", lr.w);
-    println!("b: {}", lr.b);
 }

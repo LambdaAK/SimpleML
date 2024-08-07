@@ -64,6 +64,8 @@ impl Optim {
         None => panic!("unable to get evaluated gradient")
       };
 
+      println!("gradient: \n{}", grad);
+
       // update the minimizer
 
       for i in 0 .. vars.len() {
@@ -73,6 +75,21 @@ impl Optim {
 
       println!("iteration: {}", i);
       println!("minimizer: \n{}", minimizer);
+
+      // substitute the variables in f with the values in the minimizer
+
+      let mut f_eval = f.clone();
+
+      for i in 0 .. vars.len() {
+        f_eval = f_eval.subs(&vars[i].clone(), &Expr::Num(minimizer[i]));
+      }
+
+      // evaluate f
+
+      let f_eval = f_eval.eval();
+
+      println!("f: {}", f_eval)
+      
       
     };
 

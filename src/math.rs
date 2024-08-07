@@ -188,7 +188,6 @@ impl Expr {
           Expr::Pow(Box::new(new_a), Box::new(new_b))
         },
         Expr::App(f, a) => {
-          println!("aaaaaaaaa");
           let new_a = a.subs(var, val);
           Expr::App(f.clone(), Box::new(new_a))
         }
