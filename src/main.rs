@@ -71,42 +71,41 @@ macro_rules! col_vec {
   };
 }
 
+/*
+QRResult(Q=array([
+    [-0.12309149,  0.90453403,  0.40824829],
+    [-0.49236596,  0.30151134, -0.81649658],
+    [-0.86164044, -0.30151134,  0.40824829]]), 
+    
+    R=array(
+    [[-8.12403840e+00, -9.60113630e+00, -1.10782342e+01],
+    [ 0.00000000e+00,  9.04534034e-01,  1.80906807e+00],
+    [ 0.00000000e+00,  0.00000000e+00, -7.58790979e-16]]))
 
-
-
-
-
+*/
 
 
 fn main() {
     
-    let v1 = ColVec::new(vec![1.0, 2.0, 1., 100.1]);
-    let v2 = ColVec::new(vec![4.0, 1000.1, 1., 100.2]);
-    let v3 = ColVec::new(vec![4.0, 10000.12, 1., -100.1123]);
-    let v4 = ColVec::new(vec![4.0, 10000.12, 1., -1347134.]);
+    let m = matrix![
+        [1., 2., 3.],
+        [4., 5., 6.],
+        [7., 8., 10.]
+    ];
 
-    let vectors = vec![v1, v2, v3, v4];
+    let (q, r) = m.qr();
 
-    let ortho = ColVec::orthonormalize(vectors);
+    let i1 = &q * q.t();
+    let i2 = q.t() * &q;
 
-    for v in &ortho {
-        println!("{}", v);
-    }
+    println!("q: \n{}", &q);
 
-    // for each pair of vectors, compute their dot product and verify that it's 0
+    println!("i1: \n{}", i1);
+    println!("i2: \n{}", i2);
 
-    for i in 0 .. ortho.len() {
-        for j in i + 1 .. ortho.len() {
-            let dot_product = ortho[i].dot(&ortho[j]);
-            println!("dot product: {}", dot_product);
-        }
-    }
+    println!("r: \n{}", &r);
 
-    // for each vector, verify that its norm is 1
-
-    for v in &ortho {
-        println!("norm: {}", v.norm());
-    }
+    println!("q * r: \n{}", &q * &r);
 
 
 }

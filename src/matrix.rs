@@ -45,6 +45,38 @@ impl std::fmt::Display for Matrix {
 
 impl Matrix {
 
+    pub fn orthonormalize(&self) -> Matrix {
+        // Orthonormalize the columns of the matrix
+
+        let transposed = self.t();
+
+        let rows_as_col_vecs = transposed.rows_as_col_vecs();
+
+        let orthonormalized = ColVec::orthonormalize(rows_as_col_vecs);
+
+        let mut vec = Vec::new();
+
+        for i in 0 .. orthonormalized.len() {
+            vec.push(orthonormalized[i].data.clone());
+        }
+
+        return Matrix::new(vec).t();
+
+    }
+}
+
+impl Matrix {
+    pub fn qr(&self) -> (Matrix, Matrix) {
+        let q = self.orthonormalize();
+
+        let r = q.t() * self;
+        
+        (q, r)
+    }
+}
+
+impl Matrix {
+
     pub fn random(rows: usize, cols: usize) -> Matrix {
         let mut vec = Vec::new();
         for _ in 0..rows {
@@ -519,6 +551,20 @@ impl Matrix {
         
         return matrices;
 
+    }
+
+    pub fn rows_as_col_vecs(&self) -> Vec<ColVec> {
+        let mut col_vecs : Vec<ColVec> = Vec::new();
+
+        for i in 0 .. self.rows() {
+            let mut data = Vec::new();
+            for j in 0 .. self.cols() {
+                data.push(self.data[i][j]);
+            }
+            col_vecs.push(ColVec::new(data));
+        }
+
+        return col_vecs;
     }
 
     pub fn into_vec(&self) -> Vec<f64> {
