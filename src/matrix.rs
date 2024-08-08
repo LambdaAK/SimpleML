@@ -98,6 +98,24 @@ impl Matrix {
     }
 }
 
+impl Matrix {
+    pub fn qr_algo(&self, iter: usize) -> Matrix {
+
+        let mut a = self.clone();
+
+        for i in 0 .. iter {
+
+            println!("a_{} = \n{}", i, a);
+
+            let (q, r) = a.qr();
+            a = r * q;
+        }
+
+        a
+    }
+    
+}
+
 
 /*
 Matrix operations

@@ -88,24 +88,13 @@ QRResult(Q=array([
 fn main() {
     
     let m = matrix![
-        [1., 2., 3.],
-        [4., 5., 6.],
-        [7., 8., 10.]
+        [1., 2., 3., 4.],
+        [4., 5., 6., 2.],
+        [7., 8., 10., 3.],
+        [1., 1., 2., 1.1]
     ];
 
-    let (q, r) = m.qr();
+    let a = m.qr_algo(10);
 
-    let i1 = &q * q.t();
-    let i2 = q.t() * &q;
-
-    println!("q: \n{}", &q);
-
-    println!("i1: \n{}", i1);
-    println!("i2: \n{}", i2);
-
-    println!("r: \n{}", &r);
-
-    println!("q * r: \n{}", &q * &r);
-
-
+    println!("\n{}", a);
 }
