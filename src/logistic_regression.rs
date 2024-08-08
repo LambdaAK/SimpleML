@@ -70,7 +70,12 @@ impl LogisticRegression {
     loss_function = loss_function + reg_term;
 
     loss_function
-  }
+  } 
+
+  /**
+   * 
+   * L(w, b) = (-1)/n * sum(i = 1, n, y_i * ln(1 / (1 + exp(-(w^T * x_i + b))) + (1 - y_i) * ln(1 - 1 / (1 + exp(-(w^T * x_i + b)))) + lambda/2 * ||w||^2
+   */
 
 
   pub fn new(x: Matrix, y: Matrix, lambda: f64) -> LogisticRegression {

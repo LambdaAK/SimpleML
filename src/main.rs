@@ -71,41 +71,42 @@ macro_rules! col_vec {
   };
 }
 
+
+
+
+
+
+
+
 fn main() {
     
-    let x = matrix![
-        [1., 1.],
-        [1., 2.],
-        [2., 2.],
-        [2., 3.],
-        [3., 3.],
-        [3., 4.],
-        [50., 51.],
-        [75., 101.],
-        [51., 61.],
-        [100., 101.]
-    ];
+    let v1 = ColVec::new(vec![1.0, 2.0, 1., 100.1]);
+    let v2 = ColVec::new(vec![4.0, 1000.1, 1., 100.2]);
+    let v3 = ColVec::new(vec![4.0, 10000.12, 1., -100.1123]);
+    let v4 = ColVec::new(vec![4.0, 10000.12, 1., -1347134.]);
 
-    let y = col_vec![
-        0.,
-        0.,
-        0.,
-        0.,
-        0.,
-        0.,
-        1.,
-        1.,
-        1.,
-        1.
-    ];
+    let vectors = vec![v1, v2, v3, v4];
 
-    let lr = LogisticRegression::new(x.clone(), y, 0.00);
+    let ortho = ColVec::orthonormalize(vectors);
 
-    // classify each point in x
-
-    for point in x.rows_as_matrices() {
-        let prediction = lr.predict(point);
-        println!("prediction: {}", prediction);
+    for v in &ortho {
+        println!("{}", v);
     }
+
+    // for each pair of vectors, compute their dot product and verify that it's 0
+
+    for i in 0 .. ortho.len() {
+        for j in i + 1 .. ortho.len() {
+            let dot_product = ortho[i].dot(&ortho[j]);
+            println!("dot product: {}", dot_product);
+        }
+    }
+
+    // for each vector, verify that its norm is 1
+
+    for v in &ortho {
+        println!("norm: {}", v.norm());
+    }
+
 
 }

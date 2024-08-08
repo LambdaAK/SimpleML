@@ -1,4 +1,6 @@
-use std::{fmt::{Display, Formatter}, ops::{self, IndexMut}};
+use std::{fmt::{Display, Formatter}, ops::{self, IndexMut, Sub}};
+
+use crate::math::Expr;
 
 // Macro to create a matrix
 macro_rules! matrix {
@@ -728,6 +730,62 @@ impl Matrix {
     
 }
 
+impl Matrix {
+    pub fn zero_matrix(rows: usize, cols: usize) -> Matrix {
+        let mut vec = Vec::new();
+        for _ in 0 .. rows {
+            let mut row = Vec::new();
+            for _ in 0 .. cols {
+                row.push(0.0);
+            }
+            vec.push(row);
+        }
+        Matrix {
+            data: vec,
+            rows,
+            cols
+        }
+    }
+}
+
+impl Matrix {
+    pub fn cov_matrix(&self) -> Self {
+        /*
+            The rows of this matrix are vectors
+            Each row is a point in an m dimensional space
+            There are n points
+        */
+        
+        let vectors: Vec<Matrix> = self.rows_as_matrices();
+
+        let n = vectors.len(); // the number of points
+        let m = vectors[0].cols(); // the number of dimensions per vector
+
+        let mut cov_matrix = Matrix::zero_matrix(m, m);
+
+        for i in 0 .. n {
+            let v = &vectors[i];
+            let v_t = v.t();
+
+            // v is a column vector and v_t is a row vector
+            // v_t * v is an m x m matrix
+
+            cov_matrix = cov_matrix + v_t * v;
+        }
+
+        cov_matrix = cov_matrix * (1.0 / n as f64);
+
+        cov_matrix
+
+    }
+}
+
+impl Matrix {
+    pub fn char_poly(&self) -> Expr {
+        todo!("unimplemented char_poly");
+    }
+}
+
 impl PartialEq for Matrix {
     fn eq(&self, other: &Self) -> bool {
         // check if the dimensions are the same
@@ -783,6 +841,15 @@ impl RowVec {
 
 }
 
+impl Clone for ColVec {
+    fn clone(&self) -> Self {
+        ColVec {
+            data: self.data.clone(),
+            rows: self.rows
+        }
+    }
+}
+
 impl ColVec {
     pub fn new(data: Vec<f64>) -> ColVec {
         ColVec {
@@ -808,6 +875,131 @@ impl ColVec {
 
     pub fn as_matrix(&self) -> Matrix {
         Matrix::col_vec(self.data.as_slice())
+    }
+
+    pub fn dot(&self, other: &ColVec) -> f64 {
+        if self.rows != other.rows {
+            panic!("Vector dimensions must match in ColVec::dot");
+        }
+
+        let mut sum = 0.0;
+
+        for i in 0 .. self.rows {
+            sum += self.data[i] * other.data[i];
+        }
+
+        sum
+    }
+
+    pub fn proj_onto(&self, other: &ColVec) -> ColVec {
+        let numerator = self.dot(other);
+        let denominator = other.dot(other);
+
+        let factor = numerator / denominator;
+
+        let mut data = Vec::new();
+
+        for i in 0 .. self.rows {
+            data.push(factor * other.data[i]);
+        }
+
+        ColVec::new(data)
+    }
+
+    pub fn orthogonalize(vectors: Vec<ColVec>) -> Vec<ColVec> {
+        // use Gram-Schmidt orthogonalization algorithm
+
+        // all vectors must have the same length
+
+        if vectors.len() == 0 {
+            return Vec::new();
+        }
+
+        let n = vectors[0].rows();
+
+        for i in 1 .. vectors.len() {
+            let vector = &vectors[i];
+            if vector.rows() != n {
+                panic!("All vectors must have the same dimensionality in ColVec::orthogonalize");
+            }
+        }
+
+        // the number of vectors must be at most n
+
+        if vectors.len() > n {
+            panic!("The number of vectors must be at most n in ColVec::orthogonalize");
+        }
+
+        let mut orthogonalized: Vec<ColVec> = Vec::new();
+
+        for i in 0 .. vectors.len() {
+            let mut vector = vectors[i].clone();
+
+            for j in 0 .. i {
+                let proj = vector.proj_onto(&orthogonalized[j]);
+                vector = vector - proj;
+            }
+
+            orthogonalized.push(vector);
+        }
+
+        return orthogonalized;
+
+    }
+
+    pub fn norm(&self) -> f64 {
+        let mut sum = 0.0;
+
+        for i in 0 .. self.rows {
+            sum += self.data[i] * self.data[i];
+        }
+
+        sum.sqrt()
+    }
+
+    pub fn normalize(&self) -> ColVec {
+        let norm = self.norm();
+
+        let mut data = Vec::new();
+
+        for i in 0 .. self.rows {
+            data.push(self.data[i] / norm);
+        }
+
+        ColVec::new(data)
+    }
+
+    pub fn orthonormalize(vectors: Vec<ColVec>) -> Vec<ColVec> {
+        let orthogonalized = ColVec::orthogonalize(vectors);
+
+        let mut orthonormalized: Vec<ColVec> = Vec::new();
+
+        for i in 0 .. orthogonalized.len() {
+            let vector = orthogonalized[i].normalize();
+            orthonormalized.push(vector);
+        }
+
+        return orthonormalized;
+    }
+
+
+}
+
+impl Sub for ColVec {
+    type Output = ColVec;
+
+    fn sub(self, other: ColVec) -> ColVec {
+        if self.rows != other.rows {
+            panic!("Vector dimensions must match in ColVec::sub");
+        }
+
+        let mut data = Vec::new();
+
+        for i in 0 .. self.rows {
+            data.push(self.data[i] - other.data[i]);
+        }
+
+        ColVec::new(data)
     }
 }
 
@@ -862,6 +1054,8 @@ impl IndexMut<usize> for ColVec {
         &mut self.data[index]
     }
 }
+
+
 
 
 #[cfg(test)]
