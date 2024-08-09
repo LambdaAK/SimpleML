@@ -99,20 +99,131 @@ impl Matrix {
 }
 
 impl Matrix {
-    pub fn qr_algo(&self, iter: usize) -> Matrix {
+    pub fn rref(&self) -> Matrix {
+        let mut m = self.clone(); // Clone the matrix to avoid modifying the original
+        let mut current_row = 0;  // Keep track of the current row to process
+    
+        // Step 1: Convert to Row Echelon Form (REF)
+        for col in 0..m.cols() {
+            // Find the first row that has a non-zero element in the current column
+            let mut row_non_zero = current_row;
+            while row_non_zero < m.rows() && m.get(row_non_zero, col) == 0.0 {
+                row_non_zero += 1;
+            }
+    
+            if row_non_zero == m.rows() {
+                // If no non-zero element found in this column, continue to the next column
+                continue;
+            }
+    
+            // Swap the rows if needed to bring the pivot row to the current row
+            if row_non_zero != current_row {
+                m.swap_rows_mut(current_row, row_non_zero);
+            }
+    
+            // Scale the row so that the pivot element is 1
+            let scale = 1.0 / m.get(current_row, col);
+            for j in 0..m.cols() {
+                m.data[current_row][j] *= scale;
+            }
+    
+            // Eliminate the current element from all rows below
+            for row_below in current_row + 1..m.rows() {
+                let factor = m.get(row_below, col);
+                for j in 0..m.cols() {
+                    m.data[row_below][j] -= factor * m.get(current_row, j);
+                }
+            }
+    
+            // Move to the next row
+            current_row += 1;
+        }
+    
+        // After row reduction, move all zero rows to the bottom
+        let mut last_non_zero_row = 0;
+        for i in 0..m.rows() {
+            let is_zero_row = (0..m.cols()).all(|col| m.get(i, col) == 0.0);
+            if !is_zero_row {
+                m.swap_rows_mut(last_non_zero_row, i);
+                last_non_zero_row += 1;
+            }
+        }
+    
+        // Step 2: Convert to Reduced Row Echelon Form (RREF)
+        for i in (0..current_row).rev() {  // Iterate over the rows in reverse order
+            // Find the pivot column in the current row
+            let pivot_col = (0..m.cols()).find(|&col| m.get(i, col) != 0.0);
+    
+            if let Some(pivot_col) = pivot_col {
+                // For each row above the current row, eliminate the pivot element
+                for j in 0..i {
+                    let factor = m.get(j, pivot_col);
+                    for k in 0..m.cols() {
+                        m.data[j][k] -= factor * m.get(i, k);
+                    }
+                }
+            }
+        }
+    
+        m // Return the matrix in Reduced Row Echelon Form (RREF)
+    }
+    
 
-        let mut a = self.clone();
+    
+    
+}
 
-        for i in 0 .. iter {
+impl Matrix {
+    pub fn eigen(&self) -> (Vec<f64>, Vec<ColVec>) {
+        
+        let n = self.rows;
 
-            println!("a_{} = \n{}", i, a);
-
-            let (q, r) = a.qr();
-            a = r * q;
+        if n != self.cols {
+            panic!("Matrix must be square in Matrix::eigen");
         }
 
-        a
+        let mut a = self.clone();
+        let mut prod_q = Matrix::eye(n);
+
+        
+
+        for i in 0 .. 10 {
+            let (q, r) = a.qr();
+            a = r * &q;
+            prod_q = prod_q * q;
+            println!("prod_q: \n{}", prod_q);
+        }
+
+        println!("prod_q: \n{}", prod_q);
+
+        //println!("prod_q: \n{}", prod_q);
+
+        // the eigenvalues are the diagonal entries of a
+        // the eigenvectors are the columsn of prod_q
+
+        let mut eigenvalues = Vec::new();
+        let mut eigenvectors = prod_q.t().rows_as_col_vecs();
+
+        // normalize the eigenvectors
+
+        for i in 0 .. n {
+            let norm = eigenvectors[i].norm();
+            for j in 0 .. n {
+                eigenvectors[i].data[j] /= norm;
+            }
+        }
+
+        println!("{}\n\n", a);
+
+        for i in 0 .. n {
+            eigenvalues.push(a.data[i][i]);
+        }
+
+        (eigenvalues, eigenvectors)
+
     }
+
+
     
 }
 
