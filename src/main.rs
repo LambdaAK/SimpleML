@@ -88,16 +88,30 @@ QRResult(Q=array([
 fn main() {
     
     let m = matrix![
-        [1., 2., 3., 4.],
-        [1., 2., 3., 4.],
-        [1., 2., 3., 4.],
-        [1., 2., 23., 5.]
+        [2., 1.],
+        [0., 1.]
     ];
 
-    
-    let rref = m.rref();
+    let eigenspaces = m.eig();
 
-    println!("rref(A): \n{}", rref);
+
+    eigenspaces.iter().for_each(|eigenspace| {
+        
+        let lambda = eigenspace.eigenvalue;
+
+        let eigenbasis = &eigenspace.basis;
+
+
+        println!("Eigenvalue: {}", lambda);
+
+        println!("\nEigenbasis: \n");
+
+        eigenbasis.iter().for_each(|v| {
+            println!("{}", v);
+        })
+
+
+    })
 
 
 }

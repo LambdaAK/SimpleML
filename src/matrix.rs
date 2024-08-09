@@ -99,6 +99,69 @@ impl Matrix {
 }
 
 impl Matrix {
+
+    pub fn nullspace(&self) -> Vec<ColVec> {
+            // Solve the equation Ax = 0
+    // A is a matrix, and x is a vector. We want to find all vectors x such that Ax = 0
+
+    let r = self.rref();
+
+    // Go through the rows of r, and find the pivot columns
+    let mut pivot_columns = Vec::new(); // List to store pivot columns
+
+    for i in 0..r.rows() {
+        for j in 0..r.cols() {
+            if r.get(i, j) != 0.0 {
+                pivot_columns.push(j); // Found the pivot, record the column index
+                break; // Move to the next row after finding the pivot
+            }
+        }
+    }
+
+    // Initialize vectors that store the basis for the nullspace
+    let mut nullspace_basis = Vec::new();
+
+    for i in 0..r.cols() {
+        if !pivot_columns.contains(&i) {
+            // This column is not a pivot column, so it is a free variable
+            // We set it to 1 and all other free variables to 0
+            // Then solve for the pivot variables
+
+            let mut free_vars = vec![0.0; r.cols()];
+            free_vars[i] = 1.0;
+
+            // Solve for the pivot variables
+            for j in 0..r.rows() {
+                if j < pivot_columns.len() {
+                    let pivot_col = pivot_columns[j];
+                    let mut sum = 0.0;
+                    for k in 0..r.cols() {
+                        sum += r.get(j, k) * free_vars[k];
+                    }
+                    if r.get(j, pivot_col) != 0.0 {
+                        free_vars[pivot_col] = -sum / r.get(j, pivot_col);
+                    }
+                }
+            }
+
+            nullspace_basis.push(ColVec::new(free_vars));
+        }
+    }
+
+    // Handle the case where the matrix is all zeros
+    if nullspace_basis.is_empty() && r.rows() == r.cols() {
+        for i in 0..r.cols() {
+            let mut basis_vector = vec![0.0; r.cols()];
+            basis_vector[i] = 1.0;
+            nullspace_basis.push(ColVec::new(basis_vector));
+        }
+    }
+
+    nullspace_basis
+
+
+    }
+
     pub fn rref(&self) -> Matrix {
         let mut m = self.clone(); // Clone the matrix to avoid modifying the original
         let mut current_row = 0;  // Keep track of the current row to process
@@ -173,53 +236,67 @@ impl Matrix {
     
 }
 
-impl Matrix {
-    pub fn eigen(&self) -> (Vec<f64>, Vec<ColVec>) {
-        
-        let n = self.rows;
+pub struct EigenSpace {
+    pub eigenvalue: f64,
+    pub basis: Vec<ColVec>
+}
 
-        if n != self.cols {
-            panic!("Matrix must be square in Matrix::eigen");
+impl Matrix {
+    pub fn eig(&self) -> Vec<EigenSpace> {
+
+        // must be square
+
+        if (self.rows() != self.cols()) {
+            panic!("Matrix must be square to compute eigenvalues");
         }
+
+        // use the QR algorithm to compute the eigenvalues
 
         let mut a = self.clone();
-        let mut prod_q = Matrix::eye(n);
 
-        
-
-        for i in 0 .. 10 {
+        for _ in 0 .. 100 {
             let (q, r) = a.qr();
-            a = r * &q;
-            prod_q = prod_q * q;
-            println!("prod_q: \n{}", prod_q);
+            a = r * q;
         }
 
-        println!("prod_q: \n{}", prod_q);
-
-        //println!("prod_q: \n{}", prod_q);
-
-        // the eigenvalues are the diagonal entries of a
-        // the eigenvectors are the columsn of prod_q
+        // the eigenvalues are the diagonal elements of a
 
         let mut eigenvalues = Vec::new();
-        let mut eigenvectors = prod_q.t().rows_as_col_vecs();
 
-        // normalize the eigenvectors
+        // there could be duplicate eigenvalues. Get rid of duplicates
 
-        for i in 0 .. n {
-            let norm = eigenvectors[i].norm();
-            for j in 0 .. n {
-                eigenvectors[i].data[j] /= norm;
+        for i in 0 .. a.rows() {
+            let lambda = a.get(i, i);
+            
+            // add lambda to eigenvalues only if it is not already in the list
+            if !eigenvalues.contains(&lambda) {
+                eigenvalues.push(lambda)
             }
         }
 
-        println!("{}\n\n", a);
+        // compute the eigenvectors
 
-        for i in 0 .. n {
-            eigenvalues.push(a.data[i][i]);
+        let mut eigenspaces: Vec<EigenSpace> = Vec::new();
+
+        for i in 0 .. eigenvalues.len() {
+            let lambda = eigenvalues[i];
+            let a_minus_lamnda_i = &a - &Matrix::eye(a.rows()) * lambda;
+            let nullspace = a_minus_lamnda_i.nullspace();
+
+            let mut eigenbasis = Vec::new();
+
+            nullspace.iter().for_each(|v| {
+                eigenbasis.push(v.clone())
+            });
+
+            eigenspaces.push(EigenSpace{
+                eigenvalue: lambda,
+                basis: eigenbasis
+            });
+
         }
-
-        (eigenvalues, eigenvectors)
+        
+        return eigenspaces;
 
     }
 
@@ -305,6 +382,14 @@ impl ops::Sub<&Matrix> for &Matrix {
             rows: self.rows,
             cols: self.cols
         }
+    }
+}
+
+impl ops::Sub<Matrix> for &Matrix {
+    type Output = Matrix;
+
+    fn sub(self, rhs: Matrix) -> Matrix {
+        self - &rhs
     }
 }
 
@@ -416,7 +501,6 @@ impl ops::Mul<Matrix> for f64 {
 
 impl Clone for Matrix {
     fn clone(&self) -> Self {
-        println!("CLONING MATRIX");
         Self { data: self.data.clone(), rows: self.rows.clone(), cols: self.cols.clone() }
     }
 }
