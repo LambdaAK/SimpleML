@@ -1,4 +1,4 @@
-use std::{fmt::{Display, Formatter}, ops::{self, IndexMut, Sub}};
+use std::{fmt::{Display, Formatter}, ops::{self, Add, IndexMut, Mul, Sub}};
 
 use crate::math::Expr;
 
@@ -254,8 +254,14 @@ impl Matrix {
 
         let mut a = self.clone();
 
-        for _ in 0 .. 100 {
-            let (q, r) = a.qr();
+        for i in 0 .. 100 {
+
+            // get the bottom right element of a
+
+            let bottom_right = a.get(a.rows() - 1, a.cols() - 1);
+            println!("{}", i);
+            println!("{}", a);
+            let (q, r) = (&a - bottom_right * Matrix::eye(a.rows())).qr();
             a = r * q;
         }
 
@@ -1008,6 +1014,44 @@ impl Matrix {
 }
 
 impl Matrix {
+
+    pub fn center_data(&self) -> Self {
+        /*
+            Each row is a data point
+            find the mean point and subtract it from each data point 
+        */
+
+        let rows = self.rows_as_col_vecs();
+
+        let n = rows.len();
+
+        let mut sum = ColVec::new(vec![0.0; rows[0].rows()]);
+
+        for i in 0 .. n {
+            sum = sum + &rows[i];
+        }
+
+        let mean = sum * (1.0 / n as f64);
+
+        let mut centered_rows = Vec::new();
+
+        for i in 0 .. n {
+            centered_rows.push(&rows[i] - &mean);
+        }
+
+        let mut centered_data = Matrix::zero_matrix(n, rows[0].rows());
+
+        for i in 0 .. n {
+            for j in 0 .. rows[0].rows() {
+                centered_data.data[i][j] = centered_rows[i].get(j);
+            }
+        }
+
+        return centered_data;
+
+
+    }
+
     pub fn cov_matrix(&self) -> Self {
         /*
             The rows of this matrix are vectors
@@ -1314,6 +1358,123 @@ impl IndexMut<usize> for ColVec {
     }
 }
 
+impl Add for ColVec {
+    type Output = ColVec;
+
+    fn add(self, other: ColVec) -> ColVec {
+        if self.rows != other.rows {
+            panic!("Vector dimensions must match in ColVec::add");
+        }
+
+        let mut data = Vec::new();
+
+        for i in 0 .. self.rows {
+            data.push(self.data[i] + other.data[i]);
+        }
+
+        ColVec::new(data)
+    }
+}
+
+impl Add<&ColVec> for ColVec {
+    type Output = ColVec;
+
+    fn add(self, other: &ColVec) -> ColVec {
+        if self.rows != other.rows {
+            panic!("Vector dimensions must match in ColVec::add");
+        }
+
+        let mut data = Vec::new();
+
+        for i in 0 .. self.rows {
+            data.push(self.data[i] + other.data[i]);
+        }
+
+        ColVec::new(data)
+    }
+}
+
+impl Add<ColVec> for &ColVec {
+    type Output = ColVec;
+
+    fn add(self, other: ColVec) -> ColVec {
+        self.clone() + other
+    }
+}
+
+impl Mul<f64> for ColVec {
+    type Output = ColVec;
+
+    fn mul(self, scalar: f64) -> ColVec {
+        let mut data = Vec::new();
+
+        for i in 0 .. self.rows {
+            data.push(self.data[i] * scalar);
+        }
+
+        ColVec::new(data)
+    }
+}
+
+impl Mul<f64> for &ColVec {
+    type Output = ColVec;
+
+    fn mul(self, scalar: f64) -> ColVec {
+        self.clone() * scalar
+    }
+}
+
+impl Mul<ColVec> for f64 {
+    type Output = ColVec;
+
+    fn mul(self, other: ColVec) -> ColVec {
+        other * self
+    }
+}
+
+impl Mul<&ColVec> for f64 {
+    type Output = ColVec;
+
+    fn mul(self, other: &ColVec) -> ColVec {
+        other.clone() * self
+    }
+}
+
+
+
+impl Sub<&ColVec> for ColVec {
+    type Output = ColVec;
+
+    fn sub(self, other: &ColVec) -> ColVec {
+        if self.rows != other.rows {
+            panic!("Vector dimensions must match in ColVec::sub");
+        }
+
+        let mut data = Vec::new();
+
+        for i in 0 .. self.rows {
+            data.push(self.data[i] - other.data[i]);
+        }
+
+        ColVec::new(data)
+    }
+}
+
+impl Sub<ColVec> for &ColVec {
+    type Output = ColVec;
+
+    fn sub(self, other: ColVec) -> ColVec {
+        self.clone() - other
+    }
+}
+
+impl Sub<&ColVec> for &ColVec {
+    type Output = ColVec;
+
+    fn sub(self, other: &ColVec) -> ColVec {
+        self.clone() - other.clone()
+    }
+}
 
 
 
