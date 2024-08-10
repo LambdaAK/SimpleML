@@ -86,18 +86,20 @@ QRResult(Q=array([
 
 
 fn main() {
+
+    // y = 2x + 1
     
     let x = matrix![
-        [1., 1., 1., 1.],
-        [2., 2., 2.01, 2.025],
-        [3.1, 3.0001, 3.001, 3.0000021],
-        [4.1, 4.0001, 4.001, 4.0000021],
-        [5.1, 5.0001, 5.001, 5.0000021],
-        [6.1, 6.0001, 6.001, 6.0000021],
-        [7.1, 7.0001, 7.001, 7.0000021],
-        [8.1, 8.0001, 8.001, 8.0000021],
-        [9.1, 9.0001, 9.001, 9.0000021],
-        [10.1, 10.0001, 10.001, 10.0000021]
+        [1.646, 3.3246, 1.11341414],
+        [2.0877175153, 5., 1.13413414],
+        [3.242424525, 7.1353, 1.36336],
+        [4.245245, 9.46464644786, 1.313414],
+        [5., 11.245245245, 1.0008765567865],
+        [6.46848486, 13.1351351351555, 1.689699699],
+        [7., 15.06957, 1.355],
+        [8.46747, 17.4674747, 1.689969],
+        [9.4684848, 19.4848, 1.00689689],
+        [10.68, 21.46846846846848468, 1.13589035]
     ];
 
     let c = x.center_data();
@@ -108,19 +110,37 @@ fn main() {
 
     println!("{}", c.rref());
 
-    let eigenspaces = c.eig();
+    let (eigenvalues, eigenvectors) = c.eig();
 
-    for eigenspace in eigenspaces {
-        let lambda = eigenspace.eigenvalue;
-        
-        println!("Eigenvalue: {}", lambda);
+    println!("eigenvalues");
+    
+    for i in 0 .. eigenvalues.len() {
+        let l = eigenvalues[i];
+        let v = eigenvectors[i].clone();
 
-        println!("\nEigenbasis:");
+        println!("l: {}", l);
+        println!("v: {}", v);
 
-        for v in eigenspace.basis {
-            println!("{}", v);
-        }
+        let c_times_v = c.clone() * v.clone().as_matrix();
+
+        println!("c_times_v: {}", c_times_v);
+
+        let l_times_v = l * v.clone();
+
+        println!("l_times_v: {}", l_times_v);
+
+
+
+
     }
 
 
+
+
 }
+
+/*
+>>> np.linalg.eig(a)
+EigResult(eigenvalues=array([3.06035199e-02, 4.27016678e+01]), eigenvectors=array([[-0.8927853 , -0.45048242],
+       [ 0.45048242, -0.8927853 ]]))
+*/

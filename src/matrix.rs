@@ -242,67 +242,49 @@ pub struct EigenSpace {
 }
 
 impl Matrix {
-    pub fn eig(&self) -> Vec<EigenSpace> {
+    pub fn eig(&self) -> (Vec<f64>, Vec<ColVec>) {
 
         // must be square
 
-        if (self.rows() != self.cols()) {
+        if self.rows() != self.cols() {
             panic!("Matrix must be square to compute eigenvalues");
         }
 
         // use the QR algorithm to compute the eigenvalues
 
         let mut a = self.clone();
+        let mut u = Self::eye(a.rows());
 
-        for i in 0 .. 100 {
+        for i in 0 .. 1000 {
 
             // get the bottom right element of a
 
             let bottom_right = a.get(a.rows() - 1, a.cols() - 1);
             println!("{}", i);
             println!("{}", a);
-            let (q, r) = (&a - bottom_right * Matrix::eye(a.rows())).qr();
-            a = r * q;
+            let (q, r) = (&a - 0.000 * bottom_right * Matrix::eye(a.rows())).qr();
+            a = r * &q;
+            u = u * q;
         }
+
+        println!("U: \n{}", u);
 
         // the eigenvalues are the diagonal elements of a
 
         let mut eigenvalues = Vec::new();
 
-        // there could be duplicate eigenvalues. Get rid of duplicates
+        // the eigenvalues are the diagonal elements of a
 
         for i in 0 .. a.rows() {
-            let lambda = a.get(i, i);
-            
-            // add lambda to eigenvalues only if it is not already in the list
-            if !eigenvalues.contains(&lambda) {
-                eigenvalues.push(lambda)
-            }
+            eigenvalues.push(a.get(i, i));
         }
 
-        // compute the eigenvectors
+        let eigenvectors = u.t().rows_as_col_vecs();
 
-        let mut eigenspaces: Vec<EigenSpace> = Vec::new();
 
-        for i in 0 .. eigenvalues.len() {
-            let lambda = eigenvalues[i];
-            let a_minus_lamnda_i = &a - &Matrix::eye(a.rows()) * lambda;
-            let nullspace = a_minus_lamnda_i.nullspace();
+        return (eigenvalues, eigenvectors);
 
-            let mut eigenbasis = Vec::new();
 
-            nullspace.iter().for_each(|v| {
-                eigenbasis.push(v.clone())
-            });
-
-            eigenspaces.push(EigenSpace{
-                eigenvalue: lambda,
-                basis: eigenbasis
-            });
-
-        }
-        
-        return eigenspaces;
 
     }
 
