@@ -1,11 +1,11 @@
 use crate::token::{FunctionToken, Token};
-use crate::math::{Expr, Fun};
+use crate::math::{Expr, UnaryFun};
 
 
-fn function_token_to_fun(token: &FunctionToken) -> Fun {
+fn function_token_to_fun(token: &FunctionToken) -> UnaryFun {
   match token {
-    FunctionToken::Ln => Fun::Ln,
-    FunctionToken::ReLU => Fun::ReLU
+    FunctionToken::Ln => UnaryFun::Ln,
+    FunctionToken::ReLU => UnaryFun::ReLU
   }
 }
 
@@ -82,7 +82,7 @@ fn parse_l2(tokens: &[Token]) -> (Expr, &[Token]) {
     [Token::Fun(f), Token::LeftParen, rest @ ..] => {
       let (expr, rest) = parse_l5(rest);
       match rest {
-        [Token::RightParen, rest @ ..] => (Expr::App(function_token_to_fun(f), Box::new(expr)), rest),
+        [Token::RightParen, rest @ ..] => (Expr::UnaryApp(function_token_to_fun(f), Box::new(expr)), rest),
         _ => panic!("Expected a right paren")
       }
     },

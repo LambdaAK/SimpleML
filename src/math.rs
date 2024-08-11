@@ -6,38 +6,62 @@ use crate::{matrix, token::ConstantToken};
   Fun enum with implementations
 */
 
-pub enum Fun {
+pub enum UnaryFun {
   Ln,
   ReLU,
   ReLUPrime
 }
 
-impl Fun {
-  pub fn from_str(s: &str) -> Option<Fun> {
+pub enum BinaryFun {
+  Max,
+  MaxPrime
+}
+
+
+impl UnaryFun {
+  pub fn from_str(s: &str) -> Option<UnaryFun> {
     match s {
-      "ln" => Some(Fun::Ln),
-      "relu" => Some(Fun::ReLU),
+      "ln" => Some(UnaryFun::Ln),
+      "relu" => Some(UnaryFun::ReLU),
       _ => None
     }
   }
 }
 
-impl Clone for Fun {
+impl Clone for UnaryFun {
   fn clone(&self) -> Self {
     match self {
-      Fun::Ln => Fun::Ln,
-      Fun::ReLU => Fun::ReLU,
-      Fun::ReLUPrime => Fun::ReLUPrime
+      UnaryFun::Ln => UnaryFun::Ln,
+      UnaryFun::ReLU => UnaryFun::ReLU,
+      UnaryFun::ReLUPrime => UnaryFun::ReLUPrime,
     }
   }
 }
 
-impl Display for Fun {
+impl Clone for BinaryFun {
+  fn clone(&self) -> Self {
+    match self {
+      BinaryFun::Max => BinaryFun::Max,
+      BinaryFun::MaxPrime => BinaryFun::MaxPrime
+    }
+  }
+}
+
+impl Display for UnaryFun {
   fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
     match self {
-      Fun::Ln => write!(f, "ln"),
-      Fun::ReLU => write!(f, "ReLU"),
-      Fun::ReLUPrime => write!(f, "ReLU'")
+      UnaryFun::Ln => write!(f, "ln"),
+      UnaryFun::ReLU => write!(f, "ReLU"),
+      UnaryFun::ReLUPrime => write!(f, "ReLU'"),
+    }
+  }
+}
+
+impl Display for BinaryFun {
+  fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+    match self {
+      BinaryFun::Max => write!(f, "max"),
+      BinaryFun::MaxPrime => write!(f, "max'")
     }
   }
 }
@@ -54,7 +78,8 @@ pub enum Expr {
   Mul(Box<Expr>, Box<Expr>),
   Div(Box<Expr>, Box<Expr>),
   Pow(Box<Expr>, Box<Expr>),
-  App(Fun, Box<Expr>),
+  UnaryApp(UnaryFun, Box<Expr>),
+  BinaryApp(BinaryFun, Box<Expr>, Box<Expr>),
   Var(String)
 }
 
@@ -68,7 +93,8 @@ impl Clone for Expr {
             Self::Mul(arg0, arg1) => Self::Mul(arg0.clone(), arg1.clone()),
             Self::Div(arg0, arg1) => Self::Div(arg0.clone(), arg1.clone()),
             Self::Pow(arg0, arg1) => Self::Pow(arg0.clone(), arg1.clone()),
-            Self::App(arg0, arg1) => Self::App(arg0.clone(), arg1.clone()),
+            Self::UnaryApp(arg0, arg1) => Self::UnaryApp(arg0.clone(), arg1.clone()),
+            Self::BinaryApp(arg0, arg1, arg2) => Self::BinaryApp(arg0.clone(), arg1.clone(), arg2.clone()),
             Self::Var(arg0) => Self::Var(arg0.clone())
         }
     }
@@ -92,7 +118,8 @@ impl std::fmt::Display for Expr {
       Expr::Mul(a, b) => write!(f, "({} * {})", a, b),
       Expr::Div(a, b) => write!(f, "({} / {})", a, b),
       Expr::Pow(a, b) => write!(f, "({} ^ {})", a, b),
-      Expr::App(fun, arg) => write!(f, "{}({})", fun, arg),
+      Expr::UnaryApp(fun, arg) => write!(f, "{}({})", fun, arg),
+      Expr::BinaryApp(fun, a, b) => write!(f, "{}({}, {})", fun, a, b),
       Expr::Var(v) => write!(f, "{}", v)
     }
   }
@@ -143,7 +170,12 @@ impl Expr {
         vars.extend(b.vars_aux());
         vars
       },
-      Expr::App(_, a) => a.vars_aux(),
+      Expr::UnaryApp(_, a) => a.vars_aux(),
+      Expr::BinaryApp(_, a, b) => {
+        let mut vars = a.vars_aux();
+        vars.extend(b.vars_aux());
+        vars
+      },
       Expr::Var(v) => {
         let mut vars = HashSet::new();
         vars.insert(v.clone());
@@ -187,10 +219,15 @@ impl Expr {
           let new_b = b.subs(var, val);
           Expr::Pow(Box::new(new_a), Box::new(new_b))
         },
-        Expr::App(f, a) => {
+        Expr::UnaryApp(f, a) => {
           let new_a = a.subs(var, val);
-          Expr::App(f.clone(), Box::new(new_a))
-        }
+          Expr::UnaryApp(f.clone(), Box::new(new_a))
+        },
+        Expr::BinaryApp(f, a, b) => {
+          let new_a = a.subs(var, val);
+          let new_b = b.subs(var, val);
+          Expr::BinaryApp(f.clone(), Box::new(new_a), Box::new(new_b))
+        },
         Expr::Var(v) => {
           if v == var {
             val.clone()
@@ -282,13 +319,23 @@ impl Expr {
         }
       },
 
-      Expr::App(f, a) => {
+      Expr::UnaryApp(f, a) => {
         let new_a = a.eval();
         match (f, &new_a) {
-          (Fun::Ln, Expr::Num(x)) => Expr::Num(x.ln()),
-          (Fun::ReLU, Expr::Num(x)) => Expr::Num(x.max(0.0)),
-          (Fun::ReLUPrime, Expr::Num(x)) => Expr::Num(if x > &0.0 { 1.0 } else { 0.0 }),
-          _ => Expr::App(f.clone(), Box::new(new_a))
+          (UnaryFun::Ln, Expr::Num(x)) => Expr::Num(x.ln()),
+          (UnaryFun::ReLU, Expr::Num(x)) => Expr::Num(x.max(0.0)),
+          (UnaryFun::ReLUPrime, Expr::Num(x)) => Expr::Num(if x > &0.0 { 1.0 } else { 0.0 }),
+          _ => Expr::UnaryApp(f.clone(), Box::new(new_a))
+        }
+      },
+
+      Expr::BinaryApp(f, a, b) => {
+        let new_a = a.eval();
+        let new_b = b.eval();
+        match (f, &new_a, &new_b) {
+          (BinaryFun::Max, Expr::Num(x), Expr::Num(y)) => Expr::Num(x.max(*y)),
+          (BinaryFun::MaxPrime, Expr::Num(x), Expr::Num(y)) => Expr::Num(if x > y { 1.0 } else { 0.0 }),
+          _ => Expr::BinaryApp(f.clone(), Box::new(new_a), Box::new(new_b))
         }
       },
 
@@ -387,26 +434,30 @@ impl Expr {
         
         let coeff = Expr::Pow(Box::new(a.clone()), Box::new(b.clone()));
 
-        let rest = ((b * a_prime) / a.clone()) + Expr::App(Fun::Ln, Box::new(a)) * b_prime.clone();
+        let rest = ((b * a_prime) / a.clone()) + Expr::UnaryApp(UnaryFun::Ln, Box::new(a)) * b_prime.clone();
 
         (coeff * rest).eval()
       },
 
-      Expr::App(f, a) => Self::diff_app(f, a, wrt).eval(),
+      Expr::UnaryApp(f, a) => Self::diff_app(f, a, wrt).eval(),
 
+      Expr::BinaryApp(f, a, b) => {
+        panic!("Diff BinaryApp not implemented")
+      }
+            
     }
   }
 
-  fn diff_app(f: &Fun, a: &Expr, wrt: &String) -> Expr {
+  fn diff_app(f: &UnaryFun, a: &Expr, wrt: &String) -> Expr {
     match f {
-      Fun::Ln => {
+      UnaryFun::Ln => {
         let new_a = a.diff(wrt);
         new_a / a.clone()
       },
-      Fun::ReLU => {
-        Expr::App(Fun::ReLUPrime, Box::new(a.clone())) * a.diff(wrt)
+      UnaryFun::ReLU => {
+        Expr::UnaryApp(UnaryFun::ReLUPrime, Box::new(a.clone())) * a.diff(wrt)
       },
-      Fun::ReLUPrime => {
+      UnaryFun::ReLUPrime => {
         Expr::Num(0.0)
       }
     }
@@ -592,15 +643,19 @@ pub fn pi() -> Expr {
 }
 
 pub fn ln(x: Expr) -> Expr {
-  Expr::App(Fun::Ln, Box::new(x))
+  Expr::UnaryApp(UnaryFun::Ln, Box::new(x))
 }
 
 pub fn relu(x: Expr) -> Expr {
-  Expr::App(Fun::ReLU, Box::new(x))
+  Expr::UnaryApp(UnaryFun::ReLU, Box::new(x))
 }
 
 pub fn relu_prime(x: Expr) -> Expr {
-  Expr::App(Fun::ReLUPrime, Box::new(x))
+  Expr::UnaryApp(UnaryFun::ReLUPrime, Box::new(x))
+}
+
+pub fn max(x: Expr, y: Expr) -> Expr {
+  Expr::BinaryApp(BinaryFun::Max, Box::new(x), Box::new(y))
 }
 
 pub fn var(v: &str) -> Expr {

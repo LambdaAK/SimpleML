@@ -14,6 +14,7 @@ mod lr;
 mod optim;
 use std::time::{SystemTime, UNIX_EPOCH};
 mod logistic_regression;
+mod SVM;
 
 // Macro to create a matrix
 macro_rules! matrix {
@@ -87,52 +88,35 @@ QRResult(Q=array([
 
 fn main() {
 
-    // y = 2x + 1
-    
     let x = matrix![
-        [1.646, 3.3246, 1.11341414],
-        [2.0877175153, 5., 1.13413414],
-        [3.242424525, 7.1353, 1.36336],
-        [4.245245, 9.46464644786, 1.313414],
-        [5., 11.245245245, 1.0008765567865],
-        [6.46848486, 13.1351351351555, 1.689699699],
-        [7., 15.06957, 1.355],
-        [8.46747, 17.4674747, 1.689969],
-        [9.4684848, 19.4848, 1.00689689],
-        [10.68, 21.46846846846848468, 1.13589035]
+        [1., 2.],
+        [-1., -2.],
+        [0.5, 100.],
+        [-1.5, 15.]
+        
     ];
 
-    let c = x.center_data();
+    let y = col_vec![1., -1., 1., -1.];
 
-    let c = c.cov_matrix();
+    let svm = SVM::SVM::new(x, y, 10.0);
 
-    println!("{}", c);
-
-    println!("{}", c.rref());
-
-    let (eigenvalues, eigenvectors) = c.eig();
-
-    println!("eigenvalues");
     
-    for i in 0 .. eigenvalues.len() {
-        let l = eigenvalues[i];
-        let v = eigenvectors[i].clone();
+    let input1 = col_vec![1., 2.];
+    let input2 = col_vec![-1., -2.];
+    let input3 = col_vec![0.5, 100.];
+    let input4 = col_vec![-1.5, 15.];
 
-        println!("l: {}", l);
-        println!("v: {}", v);
+    let prediction1 = svm.predict(input1);
+    let prediction2 = svm.predict(input2);
+    let prediction3 = svm.predict(input3);
+    let prediction4 = svm.predict(input4);
 
-        let c_times_v = c.clone() * v.clone().as_matrix();
-
-        println!("c_times_v: {}", c_times_v);
-
-        let l_times_v = l * v.clone();
-
-        println!("l_times_v: {}", l_times_v);
-
-
+    println!("prediction 1: {}", prediction1);
+    println!("prediction 2: {}", prediction2);
+    println!("prediction 3: {}", prediction3);
+    println!("prediction 4: {}", prediction4);
 
 
-    }
 
 
 
