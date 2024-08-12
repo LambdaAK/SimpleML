@@ -88,43 +88,61 @@ QRResult(Q=array([
 
 fn main() {
 
+    // seperable by x + 1
+
     let x = matrix![
-        [1., 2.],
-        [-1., -2.],
-        [0.5, 100.],
-        [-1.5, 15.]
+        [1., 4.],
+        [2., 5.5],
+        [3., 6.7],
+        [4., 8.2],
+        [5., 9.1],
+
+        [1., -0.5],
+        [2., 0.2],
+        [3., 1.1],
+        [4., 2.3],
+        [5., 3.4]
         
     ];
 
-    let y = col_vec![1., -1., 1., -1.];
 
-    let svm = SVM::SVM::new(x, y, 10.0);
+    let y = col_vec![
+        1.,
+        1.,
+        1.,
+        1.,
+        1.,
+        -1.,
+        -1.,
+        -1.,
+        -1.,
+        -1.
+    ];
+
+    let svm = SVM::SVM::new(x.clone(), y.clone(), 10.0);
+    let p = Perceptron::new(x.clone(), y);
 
     
-    let input1 = col_vec![1., 2.];
-    let input2 = col_vec![-1., -2.];
-    let input3 = col_vec![0.5, 100.];
-    let input4 = col_vec![-1.5, 15.];
+    // classify all of those points
 
-    let prediction1 = svm.predict(input1);
-    let prediction2 = svm.predict(input2);
-    let prediction3 = svm.predict(input3);
-    let prediction4 = svm.predict(input4);
-
-    println!("prediction 1: {}", prediction1);
-    println!("prediction 2: {}", prediction2);
-    println!("prediction 3: {}", prediction3);
-    println!("prediction 4: {}", prediction4);
+    let points = x.rows_as_matrices();
 
 
+    println!("Perceptron predictions");
+
+    for i in 0..points.len() {
+        let point = &points[i];
+        let label = p.predict(&point);
+        println!("{}: {}", i, label);
+    }
 
 
+    println!("SVM predictions");
+    for i in 0..points.len() {
+        let point = &points[i];
+        let label = svm.predict(point.t());
+        println!("{}: {}", i, label);
+    }
 
 
 }
-
-/*
->>> np.linalg.eig(a)
-EigResult(eigenvalues=array([3.06035199e-02, 4.27016678e+01]), eigenvectors=array([[-0.8927853 , -0.45048242],
-       [ 0.45048242, -0.8927853 ]]))
-*/

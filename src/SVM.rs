@@ -77,7 +77,7 @@ impl SVM {
 
     // find the w and b that minimize the loss function
 
-    let optimizer = Optim::new(0.00001, 10000);
+    let optimizer = Optim::new(0.00001, 4000);
 
     let minimizer = optimizer.optimize(&loss_function);
 
