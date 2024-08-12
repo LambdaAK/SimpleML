@@ -1,7 +1,5 @@
 use crate::{math::{e, ln, var, Expr}, matrix::Matrix, optim::Optim};
 
-
-
 pub struct LogisticRegression {
   x: Matrix,
   y: Matrix,

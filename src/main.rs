@@ -2,7 +2,8 @@ mod matrix;
 use logistic_regression::LogisticRegression;
 use lr::LinearRegression;
 use math::Expr;
-use matrix::ColVec;
+use matrix::{ColVec, Kernel};
+
 use crate::matrix::Matrix;
 mod perceptron;
 use crate::perceptron::Perceptron;
@@ -15,6 +16,8 @@ mod optim;
 use std::time::{SystemTime, UNIX_EPOCH};
 mod logistic_regression;
 mod SVM;
+mod NN;
+mod KernelPerceptron;
 
 // Macro to create a matrix
 macro_rules! matrix {
@@ -88,61 +91,25 @@ QRResult(Q=array([
 
 fn main() {
 
-    // seperable by x + 1
-
+    // Define the features matrix x using the matrix! macro
     let x = matrix![
-        [1., 4.],
-        [2., 5.5],
-        [3., 6.7],
-        [4., 8.2],
-        [5., 9.1],
-
-        [1., -0.5],
-        [2., 0.2],
-        [3., 1.1],
-        [4., 2.3],
-        [5., 3.4]
-        
+        [0.0, 0.0],
+        [0.0, 1.0],
+        [1.0, 0.0],
+        [1.0, 1.0]
     ];
 
+    // Define the labels vector y
+    let y = ColVec::new(vec![
+        -1.0, // Label for (0,0)
+        -1.0, // Label for (0,1)
+        -1.0, // Label for (1,0)
+        1.0   // Label for (1,1)
+    ]);
 
-    let y = col_vec![
-        1.,
-        1.,
-        1.,
-        1.,
-        1.,
-        -1.,
-        -1.,
-        -1.,
-        -1.,
-        -1.
-    ];
-
-    let svm = SVM::SVM::new(x.clone(), y.clone(), 10.0);
-    let p = Perceptron::new(x.clone(), y);
+    let p = KernelPerceptron::KernelPerceptron::new(x, y, Kernel::polynomial(3));
 
     
-    // classify all of those points
-
-    let points = x.rows_as_matrices();
-
-
-    println!("Perceptron predictions");
-
-    for i in 0..points.len() {
-        let point = &points[i];
-        let label = p.predict(&point);
-        println!("{}: {}", i, label);
-    }
-
-
-    println!("SVM predictions");
-    for i in 0..points.len() {
-        let point = &points[i];
-        let label = svm.predict(point.t());
-        println!("{}: {}", i, label);
-    }
 
 
 }

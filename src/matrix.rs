@@ -75,6 +75,46 @@ impl Matrix {
     }
 }
 
+pub struct Kernel {
+    pub kernel: Box<dyn Fn(&ColVec, &ColVec) -> f64>
+}
+
+impl Kernel {
+    pub fn new(kernel: Box<dyn Fn(&ColVec, &ColVec) -> f64>) -> Kernel {
+        Kernel {
+            kernel
+        }
+    }
+
+    pub fn eval(&self, x: &ColVec, y: &ColVec) -> f64 {
+        (self.kernel)(x, y)
+    }
+}
+
+impl Kernel {
+    pub fn linear() -> Kernel {
+        Kernel::new(Box::new(|x, y| x.dot(y)))
+    }
+
+    pub fn polynomial(degree: i32) -> Kernel {
+        Kernel::new(Box::new(move |x, y| (x.dot(y) + 1.0).powi(degree)))
+    }
+
+    pub fn rbf(sigma: f64) -> Kernel {
+        
+        // k(x, z) = exp(-||x - z||^2 / (2 * sigma^2))
+
+        Kernel::new(Box::new(move |x, y| {
+            let diff = x - y;
+            let squared_norm = diff.dot(&diff);
+            (-squared_norm / (2.0 * sigma * sigma)).exp()
+        }))
+
+
+    }
+
+}
+
 impl Matrix {
 
     pub fn random(rows: usize, cols: usize) -> Matrix {
@@ -1268,6 +1308,12 @@ impl ColVec {
     }
 
 
+}
+
+impl ColVec {
+    pub fn set(&mut self, i: usize, value: f64) {
+        self.data[i] = value;
+    }
 }
 
 impl Sub for ColVec {

@@ -1,7 +1,5 @@
 use crate::{math::{max, var, Expr}, matrix::Matrix, optim::Optim};
 
-
-
 pub struct SVM {
 
   pub w: Matrix,
