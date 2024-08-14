@@ -57,6 +57,22 @@ fn tree_impurity(y: ColVec) -> f64 {
 
 
 impl Node {
+
+  pub fn predict(&self, x: ColVec) -> f64 {
+    match self {
+      Node::Leaf { class } => *class,
+      Node::Internal { feature, value, left, right } => {
+        if x[*feature] < *value {
+          left.predict(x)
+        }
+        else {
+          right.predict(x)
+        }
+      }
+    }
+  }
+
+
   pub fn new(x: Vec<ColVec>, y: ColVec) -> Node {
 
 

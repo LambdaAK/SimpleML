@@ -95,24 +95,38 @@ fn main() {
 
     // Define the features matrix x using the matrix! macro
     let x = vec![
-        ColVec::new(vec![1., 2.]),
-        ColVec::new(vec![2., 3.]),
-        ColVec::new(vec![3., 4.]),
-        ColVec::new(vec![4., 5.]),
-        ColVec::new(vec![5., 6.]),
-        ColVec::new(vec![6., 7.]),
-        ColVec::new(vec![7., 8.]),
-        ColVec::new(vec![8., 9.]),
+        ColVec::new(vec![1., 2., 3.]),
+        ColVec::new(vec![4., 5., 6.]),
+        ColVec::new(vec![7., 8., 9.]),
+        ColVec::new(vec![10., 11., 12.]),
+        ColVec::new(vec![13., 14., 15.]),
+        ColVec::new(vec![16., 17., 18.]),
+        ColVec::new(vec![19., 20., 21.]),
+        ColVec::new(vec![22., 23., 24.]),
+        ColVec::new(vec![25., 26., 27.]),
+        ColVec::new(vec![28., 29., 30.]),
+        ColVec::new(vec![31., 32., 33.]),
+        // many more points
+
+        ColVec::new(vec![34., 35., 36.]),
+        ColVec::new(vec![37., 38., 39.]),
+        ColVec::new(vec![40., 41., 42.]),
+        ColVec::new(vec![43., 44., 45.]),
 
     ];
 
-    let y = ColVec::new(vec![1., -1., 1., -1., 1., -1., 1., -1.]);
+    let y = ColVec::new(vec![1., 1., 1., 1., 1., 1., -1., -1., -1., -1., -1., -1., 1., 1., -1.]);
 
-    let mut tree = Node::new(x, y);
+    let tree = Node::new(x.clone(), y);
 
-    println!("{}", tree);
+    // predict the class of each point in the dataset
 
-    
+    let test = vec![
+        ColVec::new(vec![15.1, 16.02]),
+    ];
 
+    for i in 0..test.len() {
+        println!("Prediction for \n{} is {}", test[i], tree.predict(test[i].clone()));
+    }
 
 }
