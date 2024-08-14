@@ -1175,6 +1175,55 @@ impl Clone for ColVec {
     }
 }
 
+impl FromIterator<f64> for ColVec {
+    fn from_iter<I: IntoIterator<Item=f64>>(iter: I) -> Self {
+        let mut data = Vec::new();
+        for i in iter {
+            data.push(i);
+        }
+
+        let rows = data.len();
+
+        ColVec {
+            data,
+            rows
+        }
+    }
+}
+
+impl Iterator for ColVec {
+    type Item = f64;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.rows == 0 {
+            return Option::None;
+        }
+
+        let val = self.data[0];
+        self.data = self.data[1..].to_vec();
+        self.rows -= 1;
+        return Option::Some(val);
+    }
+}
+
+impl PartialEq for ColVec {
+    fn eq(&self, other: &Self) -> bool {
+        if self.rows != other.rows {
+            return false;
+        }
+
+        let epsilon = 1e-6;
+
+        for i in 0..self.rows {
+            if (self.data[i] - other.data[i]).abs() > epsilon {
+                return false;
+            }
+        }
+
+        return true;
+    }
+}
+
 impl ColVec {
     pub fn new(data: Vec<f64>) -> ColVec {
         ColVec {

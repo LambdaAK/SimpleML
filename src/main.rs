@@ -3,6 +3,7 @@ use logistic_regression::LogisticRegression;
 use lr::LinearRegression;
 use math::Expr;
 use matrix::{ColVec, Kernel};
+use DecisionTree::Node;
 
 use crate::matrix::Matrix;
 mod perceptron;
@@ -18,6 +19,7 @@ mod logistic_regression;
 mod SVM;
 mod NN;
 mod KernelPerceptron;
+mod DecisionTree;
 
 // Macro to create a matrix
 macro_rules! matrix {
@@ -92,22 +94,23 @@ QRResult(Q=array([
 fn main() {
 
     // Define the features matrix x using the matrix! macro
-    let x = matrix![
-        [0.0, 0.0],
-        [0.0, 1.0],
-        [1.0, 0.0],
-        [1.0, 1.0]
+    let x = vec![
+        ColVec::new(vec![1., 2.]),
+        ColVec::new(vec![2., 3.]),
+        ColVec::new(vec![3., 4.]),
+        ColVec::new(vec![4., 5.]),
+        ColVec::new(vec![5., 6.]),
+        ColVec::new(vec![6., 7.]),
+        ColVec::new(vec![7., 8.]),
+        ColVec::new(vec![8., 9.]),
+
     ];
 
-    // Define the labels vector y
-    let y = ColVec::new(vec![
-        -1.0, // Label for (0,0)
-        -1.0, // Label for (0,1)
-        -1.0, // Label for (1,0)
-        1.0   // Label for (1,1)
-    ]);
+    let y = ColVec::new(vec![1., -1., 1., -1., 1., -1., 1., -1.]);
 
-    let p = KernelPerceptron::KernelPerceptron::new(x, y, Kernel::polynomial(3));
+    let mut tree = Node::new(x, y);
+
+    println!("{}", tree);
 
     
 
